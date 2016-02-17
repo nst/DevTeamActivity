@@ -100,9 +100,10 @@ struct Chart {
         NSColor.greenColor(),
         NSColor.redColor(),
         NSColor.yellowColor(),
-        NSColor.brownColor(),
+        NSColor.cyanColor(),
         NSColor.purpleColor(),
-        NSColor.orangeColor()
+        NSColor.orangeColor(),
+        NSColor.magentaColor()
     ]
     
     static var colorForAuthors : [String:NSColor] = [:]
@@ -127,7 +128,7 @@ struct Chart {
     
     func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
-        guard let c = Canvas(770,550) else {
+        guard let c = Canvas(950,750, backgroundColor: NSColor.whiteColor()) else {
             assertionFailure()
             return
         }

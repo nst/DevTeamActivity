@@ -56,7 +56,7 @@ struct Canvas {
         return Int(bitmapImageRep.size.height)
     }
 
-    init?(_ width:Int, _ height:Int) {
+    init?(_ width:Int, _ height:Int, backgroundColor:NSColor?) {
         let bitmap = NSBitmapImageRep(bitmapDataPlanes:nil,
             pixelsWide:width,
             pixelsHigh:height,
@@ -85,6 +85,11 @@ struct Canvas {
         CGContextSetAllowsAntialiasing(self.context.CGContext, false)
         
         //        CGContextRestoreGState(self.context.CGContext)
+        
+        if let color = backgroundColor {
+            let rect = Rect(P(0,0), width: width, height: height)
+            drawRectangle(rect, strokeColor: color, fillColor: color)
+        }
     }
     
     func drawLineFromPoint(p1:Point, toPoint p2:Point) {
