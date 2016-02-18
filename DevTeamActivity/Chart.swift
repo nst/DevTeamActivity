@@ -10,7 +10,7 @@ import Cocoa
 
 struct Chart {
     
-    struct ChartWeekConstants {
+    struct Constants {
         static let COL_WIDTH = 20
         static let ROW_HEIGHT = 20
         static let LEFT_MARGIN_WIDTH = 20
@@ -49,7 +49,7 @@ struct Chart {
             daysInfo[day] = (weekDay, offset)
             
             let isDayOff = (weekDay == 1 || weekDay == 2)
-            offset += isDayOff ? 2 : ChartWeekConstants.COL_WIDTH
+            offset += isDayOff ? 2 : Constants.COL_WIDTH
             
             if existingDate.compare(toDate) != NSComparisonResult.OrderedAscending {
                 stop.memory = true
@@ -61,10 +61,10 @@ struct Chart {
     
     func rectForDay(offset:Int, rowIndex:Int, canvasHeight:Int) -> Rect? {
         
-        let COL_WIDTH = ChartWeekConstants.COL_WIDTH
-        let ROW_HEIGHT = ChartWeekConstants.ROW_HEIGHT
-        let LEFT_MARGIN_WIDTH = ChartWeekConstants.LEFT_MARGIN_WIDTH
-        let TOP_MARGIN_HEIGTH = ChartWeekConstants.TOP_MARGIN_HEIGTH
+        let COL_WIDTH = Constants.COL_WIDTH
+        let ROW_HEIGHT = Constants.ROW_HEIGHT
+        let LEFT_MARGIN_WIDTH = Constants.LEFT_MARGIN_WIDTH
+        let TOP_MARGIN_HEIGTH = Constants.TOP_MARGIN_HEIGTH
         
         let p = P(
             LEFT_MARGIN_WIDTH + offset,
@@ -128,13 +128,13 @@ struct Chart {
     
     func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
-        guard let c = Canvas(950,750, backgroundColor: NSColor.whiteColor()) else {
+        guard let c = Canvas(950,1000, backgroundColor: NSColor.whiteColor()) else {
             assertionFailure()
             return
         }
         
-        let ROW_HEIGHT = ChartWeekConstants.ROW_HEIGHT
-        let LEFT_MARGIN_WIDTH = ChartWeekConstants.LEFT_MARGIN_WIDTH
+        let ROW_HEIGHT = Constants.ROW_HEIGHT
+        let LEFT_MARGIN_WIDTH = Constants.LEFT_MARGIN_WIDTH
         
         let daysInfo = daysInfoFromDay(fromDay, toDay:toDay)
         
@@ -146,13 +146,38 @@ struct Chart {
         for (day, v) in daysInfo {
             let (weekDay, offset) = v
             if (weekDay == 1 || weekDay == 2) { continue }
-            let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - ChartWeekConstants.TOP_MARGIN_HEIGTH)
+            let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - Constants.TOP_MARGIN_HEIGTH)
             c.drawText("\(day)", origin: P(p.x-13, p.y+35), fontName: "Monaco", fontSize: 10, rotationAngle: CGFloat(M_PI/2.0))
+        }
+        
+        // draw legend
+        if let (_, weekday_offset) = sortedDayInfo.last {
+            let (_, offset) = weekday_offset
+            let x = LEFT_MARGIN_WIDTH + offset + Constants.COL_WIDTH + 18
+            
+            // draw title
+            c.drawText("Number of Lines Changed", origin: P(x + 10, c.height() - 25), fontName: "Monaco", fontSize: 10)
+            
+            let numberOfLines = ["0", "0+", "1000+", "2500+", "4000+", "5000+"]
+            
+            for i in 0...5 {
+                let origin = P(x + 10 + i/3 * 80, c.height() - 15 - Constants.COL_WIDTH - (i%3+1) * Constants.ROW_HEIGHT)
+                let r = Rect(origin, width: Constants.COL_WIDTH, height: Constants.ROW_HEIGHT)
+                let intensity = CGFloat(i) * 0.2
+                let color = NSColor.grayColor().colorWithAlphaComponent(intensity)
+                
+                c.drawRectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: color)
+                
+                let textPoint = P(origin.x + Constants.COL_WIDTH + 10, origin.y + 4)
+                let s = numberOfLines[i]
+                c.drawText(s, origin: textPoint, fontName:"Monaco", fontSize: 10)
+                
+            }
+            
         }
         
         var repoStartIndex = 0
         
-        var repoIndexInTuple = 0
         for (repo, jsonPath) in repoTuples {
             
             guard let data = NSData(contentsOfFile: jsonPath) else {
@@ -175,7 +200,7 @@ struct Chart {
             let authorsInRepo = Array(authorsInRepoSet).sort()
             
             // draw repo name
-            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, c.height() - ChartWeekConstants.TOP_MARGIN_HEIGTH - (repoStartIndex) * ROW_HEIGHT - 18), fontName: "Monaco", fontSize: 10)
+            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, c.height() - Constants.TOP_MARGIN_HEIGTH - (repoStartIndex) * ROW_HEIGHT - 18), fontName: "Monaco", fontSize: 10)
             
             repoStartIndex += 1
             
@@ -187,7 +212,7 @@ struct Chart {
                     // draw author name
                     c.drawText(
                         author,
-                        origin: P(LEFT_MARGIN_WIDTH + offset + ChartWeekConstants.COL_WIDTH + 18, c.height() - ChartWeekConstants.TOP_MARGIN_HEIGTH - (repoStartIndex+authorIndex) * ROW_HEIGHT - 15),
+                        origin: P(LEFT_MARGIN_WIDTH + offset + Constants.COL_WIDTH + 18, c.height() - Constants.TOP_MARGIN_HEIGTH - (repoStartIndex+authorIndex) * ROW_HEIGHT - 15),
                         fontName: "Monaco",
                         fontSize: 10)
                     
@@ -252,7 +277,6 @@ struct Chart {
             }
             
             repoStartIndex += authorsInRepo.count
-            repoIndexInTuple += 1
         }
         
         c.saveAtPath(outPath)
