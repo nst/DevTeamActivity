@@ -128,7 +128,7 @@ struct Chart {
     
     func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
-        guard let c = Canvas(950,1000, backgroundColor: NSColor.whiteColor()) else {
+        guard let c = Canvas(880,560, backgroundColor: NSColor.whiteColor()) else {
             assertionFailure()
             return
         }
