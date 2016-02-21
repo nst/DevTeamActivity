@@ -31,11 +31,11 @@ struct Chart {
         return df
     }()
     
-    func daysInfoFromDay(fromDay:String, toDay:String) -> [String:(weekDay:Int, offset:Int)] {
+    func daysInfoFromDay(fromDay:String, toDay:String) -> [String:(day:String, weekDay:Int, offset:Int)] {
         
         let calendar = NSCalendar.currentCalendar()
         
-        var daysInfo : [String:(weekDay:Int, offset:Int)] = [:]
+        var daysInfo : [String:(day:String, weekDay:Int, offset:Int)] = [:]
         
         let matchingComponents = NSDateComponents()
         matchingComponents.hour = 0
@@ -53,7 +53,7 @@ struct Chart {
             
             let weekDay = calendar.component(.Weekday, fromDate:existingDate)
             
-            daysInfo[day] = (weekDay, offset)
+            daysInfo[day] = (day, weekDay, offset)
             
             let isDayOff = (weekDay == 1 || weekDay == 2)
             offset += isDayOff ? 2 : self.COL_WIDTH
@@ -167,15 +167,15 @@ struct Chart {
         let sortedDayInfo = daysInfo.sort { return $0.0 < $1.0 }
         
         // draw days
-        for (day, v) in daysInfo {
-            let (weekDay, offset) = v
+        for (_, v) in daysInfo {
+            let (day, weekDay, offset) = v
             if (weekDay == 1 || weekDay == 2) { continue }
             let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - self.TOP_MARGIN_HEIGTH)
             c.drawText("\(day)", origin: P(p.x-13, p.y+35), fontName: "Monaco", fontSize: 10, rotationAngle: CGFloat(M_PI/2.0))
         }
         
         // find legend x position
-        guard let (_, (_, offset)) = sortedDayInfo.last else { assertionFailure("period must be at least 1 day"); return }
+        guard let (_, (_, _, offset)) = sortedDayInfo.last else { assertionFailure("period must be at least 1 day"); return }
         let legendAndAuthorsXPosition = LEFT_MARGIN_WIDTH + offset + COL_WIDTH + 18
         
         // draw legend
@@ -214,33 +214,33 @@ struct Chart {
                     fontSize: 10)
             }
             
-            // draw background cells
-            let weekDayOffsetTuples = sortedDayInfo.map( { $0.1 } ).filter( { weekDaysToSkip.contains($0.0) == false } )
+            // draw cells
+            let weekDayOffsetTuples = sortedDayInfo.filter( { weekDaysToSkip.contains($0.1.1) == false } )
             
-            for (_, offset) in weekDayOffsetTuples {
-                for (i, _) in authorsInRepo.enumerate() {
-                    let rect = rectForDay (offset, rowIndex: currentRow+i, canvasHeight: c.height())
-                    c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: NSColor.clearColor())
-                }
-            }
-            
-            // draw activity rectangles
-            for (day, authorsDict) in json {
-                for (author, addedRemovedDict) in authorsDict {
-
-                    var linesChanged = 0
+            // for each day of the timeframe
+            for (_,v) in weekDayOffsetTuples {
+                let (day, _, offset) = v
+                
+                // for each author in the repo
+                for (i, author) in authorsInRepo.enumerate() {
                     
-                    linesChanged +=? addedRemovedDict["added"]
-                    linesChanged +=? addedRemovedDict["removed"]
+                    // set default color
+                    var fillColor = NSColor.clearColor()
                     
-                    if let (weekDay, offset) = daysInfo[day], indexOfAuthor = authorsInRepo.indexOf(author) {
+                    if let addedRemoved = json[day]?[author] {
+                        // data exist for this day and authod
+                        // change default color accordingly
                         
-                        if weekDaysToSkip.contains(weekDay) { continue }
+                        var linesChanged = 0
                         
-                        let rect = rectForDay(offset, rowIndex: currentRow+indexOfAuthor, canvasHeight: c.height())
-                        let fillColor = fillColorForLineCountPerDay(linesChanged, baseColor:colorForAuthor(author))
-                        c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
+                        linesChanged +=? addedRemoved["added"]
+                        linesChanged +=? addedRemoved["removed"]
+                        
+                        fillColor = fillColorForLineCountPerDay(linesChanged, baseColor:colorForAuthor(author))
                     }
+                    
+                    let rect = rectForDay (offset, rowIndex: currentRow+i, canvasHeight: c.height())
+                    c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
                 }
             }
             
