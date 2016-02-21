@@ -45,7 +45,7 @@ struct Chart {
         guard let fromDate = self.dateFormatter.dateFromString(fromDay) else { assertionFailure(); return [] }
         guard let toDate = self.dateFormatter.dateFromString(toDay) else { assertionFailure(); return [] }
         
-        var offset = 0
+        var xOffset = 0
         
         calendar.enumerateDatesStartingAfterDate(fromDate, matchingComponents: matchingComponents, options: .MatchStrictly) { (date: NSDate?, exactMatch: Bool, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
             
@@ -55,10 +55,9 @@ struct Chart {
             
             let weekDay = calendar.component(.Weekday, fromDate:existingDate)
             
-            daysInfo.append((day, weekDay, offset))
+            daysInfo.append((day, weekDay, xOffset))
             
-            let isDayOff = (weekDay == 1 || weekDay == 2)
-            offset += isDayOff ? 2 : self.COL_WIDTH
+            xOffset += self.weekDaysToSkip.contains(weekDay) ? 2 : self.COL_WIDTH
             
             if existingDate.compare(toDate) != NSComparisonResult.OrderedAscending {
                 stop.memory = true
@@ -70,17 +69,12 @@ struct Chart {
     
     func rectForDay(offset:Int, rowIndex:Int, canvasHeight:Int) -> Rect {
         
-        let COL_WIDTH = self.COL_WIDTH
-        let ROW_HEIGHT = self.ROW_HEIGHT
-        let LEFT_MARGIN_WIDTH = self.LEFT_MARGIN_WIDTH
-        let TOP_MARGIN_HEIGTH = self.TOP_MARGIN_HEIGTH
-        
         let p = P(
-            LEFT_MARGIN_WIDTH + offset,
-            canvasHeight - TOP_MARGIN_HEIGTH - (rowIndex+1) * ROW_HEIGHT
+            self.LEFT_MARGIN_WIDTH + offset,
+            canvasHeight - self.TOP_MARGIN_HEIGTH - (rowIndex+1) * self.ROW_HEIGHT
         )
         
-        return Rect(p, width:COL_WIDTH, height:ROW_HEIGHT)
+        return Rect(p, width:self.COL_WIDTH, height:self.ROW_HEIGHT)
     }
     
     func fillColorForLineCountPerDay(count:Int, baseColor:NSColor) -> NSColor {
@@ -184,8 +178,7 @@ struct Chart {
                     return
             }
             
-            let authorsInRepoSet = Set(json.values.flatMap({ $0.keys }))
-            let authorsInRepo = Array(authorsInRepoSet).sort()
+            let authorsInRepo = Array(Set(json.values.flatMap({ $0.keys }))).sort()
             
             // draw repo name
             c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow) * ROW_HEIGHT - 18))
@@ -201,11 +194,11 @@ struct Chart {
             
             // draw cells
             
-            // for each day of the timeframe
-            for (day, _, offset) in dayTuples {
+            // for each author in the repo
+            for (i, author) in authorsInRepo.enumerate() {
                 
-                // for each author in the repo
-                for (i, author) in authorsInRepo.enumerate() {
+                // for each day of the timeframe
+                for (day, _, offset) in dayTuples {
                     
                     // set default color
                     var fillColor = NSColor.clearColor()
