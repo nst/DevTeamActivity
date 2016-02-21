@@ -145,7 +145,7 @@ struct Canvas {
         return textRect.size.width
     }
     
-    func drawText(text:String, origin:Point, fontName:String, fontSize:Int, rotationAngle:CGFloat = 0.0) {
+    func drawText(text:String, origin:Point, fontName:String = "Monaco", fontSize:Int = 10, rotationAngle:CGFloat = 0.0) {
         
         let p = origin.NSPoint()
         
