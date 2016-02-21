@@ -8,14 +8,21 @@
 
 import Cocoa
 
+infix operator +=? { associativity right precedence 90 }
+func +=? (inout left: Int, right: Int?) {
+    if let existingRight = right {
+        left = left + existingRight
+    }
+}
+
 struct Chart {
     
-    struct Constants {
-        static let COL_WIDTH = 20
-        static let ROW_HEIGHT = 20
-        static let LEFT_MARGIN_WIDTH = 20
-        static let TOP_MARGIN_HEIGTH = 100
-    }
+    let COL_WIDTH = 20
+    let ROW_HEIGHT = 20
+    let LEFT_MARGIN_WIDTH = 20
+    let TOP_MARGIN_HEIGTH = 100
+    
+    let weekDaysToSkip = [1,2] // Saturday, Sunday
     
     var dateFormatter: NSDateFormatter = {
         let df = NSDateFormatter()
@@ -49,7 +56,7 @@ struct Chart {
             daysInfo[day] = (weekDay, offset)
             
             let isDayOff = (weekDay == 1 || weekDay == 2)
-            offset += isDayOff ? 2 : Constants.COL_WIDTH
+            offset += isDayOff ? 2 : self.COL_WIDTH
             
             if existingDate.compare(toDate) != NSComparisonResult.OrderedAscending {
                 stop.memory = true
@@ -59,12 +66,12 @@ struct Chart {
         return daysInfo
     }
     
-    func rectForDay(offset:Int, rowIndex:Int, canvasHeight:Int) -> Rect? {
+    func rectForDay(offset:Int, rowIndex:Int, canvasHeight:Int) -> Rect {
         
-        let COL_WIDTH = Constants.COL_WIDTH
-        let ROW_HEIGHT = Constants.ROW_HEIGHT
-        let LEFT_MARGIN_WIDTH = Constants.LEFT_MARGIN_WIDTH
-        let TOP_MARGIN_HEIGTH = Constants.TOP_MARGIN_HEIGTH
+        let COL_WIDTH = self.COL_WIDTH
+        let ROW_HEIGHT = self.ROW_HEIGHT
+        let LEFT_MARGIN_WIDTH = self.LEFT_MARGIN_WIDTH
+        let TOP_MARGIN_HEIGTH = self.TOP_MARGIN_HEIGTH
         
         let p = P(
             LEFT_MARGIN_WIDTH + offset,
@@ -126,6 +133,28 @@ struct Chart {
         }
     }
     
+    func drawLegend(c:Canvas, x:Int) {
+        
+        // draw title
+        c.drawText("Number of Lines Changed", origin: P(x + 10, c.height() - 25), fontName: "Monaco", fontSize: 10)
+        
+        let numberOfLines = ["0", "0+", "1000+", "2500+", "4000+", "5000+"]
+        
+        for i in 0...5 {
+            let origin = P(x + 10 + i/3 * 80, c.height() - 15 - COL_WIDTH - (i%3+1) * self.ROW_HEIGHT)
+            let r = Rect(origin, width: COL_WIDTH, height: self.ROW_HEIGHT)
+            let intensity = CGFloat(i) * 0.2
+            let color = NSColor.grayColor().colorWithAlphaComponent(intensity)
+            
+            c.drawRectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: color)
+            
+            let textPoint = P(origin.x + COL_WIDTH + 10, origin.y + 4)
+            let s = numberOfLines[i]
+            c.drawText(s, origin: textPoint, fontName:"Monaco", fontSize: 10)
+        }
+        
+    }
+    
     func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
         guard let c = Canvas(880,560, backgroundColor: NSColor.whiteColor()) else {
@@ -133,50 +162,26 @@ struct Chart {
             return
         }
         
-        let ROW_HEIGHT = Constants.ROW_HEIGHT
-        let LEFT_MARGIN_WIDTH = Constants.LEFT_MARGIN_WIDTH
-        
         let daysInfo = daysInfoFromDay(fromDay, toDay:toDay)
         
-        let sortedDayInfo = daysInfo.sort {
-            return $0.0 < $1.0
-        }
+        let sortedDayInfo = daysInfo.sort { return $0.0 < $1.0 }
         
         // draw days
         for (day, v) in daysInfo {
             let (weekDay, offset) = v
             if (weekDay == 1 || weekDay == 2) { continue }
-            let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - Constants.TOP_MARGIN_HEIGTH)
+            let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - self.TOP_MARGIN_HEIGTH)
             c.drawText("\(day)", origin: P(p.x-13, p.y+35), fontName: "Monaco", fontSize: 10, rotationAngle: CGFloat(M_PI/2.0))
         }
         
-        // draw legend
-        if let (_, weekday_offset) = sortedDayInfo.last {
-            let (_, offset) = weekday_offset
-            let x = LEFT_MARGIN_WIDTH + offset + Constants.COL_WIDTH + 18
-            
-            // draw title
-            c.drawText("Number of Lines Changed", origin: P(x + 10, c.height() - 25), fontName: "Monaco", fontSize: 10)
-            
-            let numberOfLines = ["0", "0+", "1000+", "2500+", "4000+", "5000+"]
-            
-            for i in 0...5 {
-                let origin = P(x + 10 + i/3 * 80, c.height() - 15 - Constants.COL_WIDTH - (i%3+1) * Constants.ROW_HEIGHT)
-                let r = Rect(origin, width: Constants.COL_WIDTH, height: Constants.ROW_HEIGHT)
-                let intensity = CGFloat(i) * 0.2
-                let color = NSColor.grayColor().colorWithAlphaComponent(intensity)
-                
-                c.drawRectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: color)
-                
-                let textPoint = P(origin.x + Constants.COL_WIDTH + 10, origin.y + 4)
-                let s = numberOfLines[i]
-                c.drawText(s, origin: textPoint, fontName:"Monaco", fontSize: 10)
-                
-            }
-            
-        }
+        // find legend x position
+        guard let (_, (_, offset)) = sortedDayInfo.last else { assertionFailure("period must be at least 1 day"); return }
+        let legendAndAuthorsXPosition = LEFT_MARGIN_WIDTH + offset + COL_WIDTH + 18
         
-        var repoStartIndex = 0
+        // draw legend
+        self.drawLegend(c, x: legendAndAuthorsXPosition)
+        
+        var currentRow = 0
         
         for (repo, jsonPath) in repoTuples {
             
@@ -191,92 +196,55 @@ struct Chart {
                 return
             }
             
-            // TODO: simplify this
-            var authorsInRepoSet = Set<String>()
-            let keys = json.values.flatMap({ $0.keys })
-            for k in keys {
-                authorsInRepoSet.insert(k)
-            }
+            let authorsInRepoSet = Set(json.values.flatMap({ $0.keys }))
             let authorsInRepo = Array(authorsInRepoSet).sort()
             
             // draw repo name
-            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, c.height() - Constants.TOP_MARGIN_HEIGTH - (repoStartIndex) * ROW_HEIGHT - 18), fontName: "Monaco", fontSize: 10)
+            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow) * ROW_HEIGHT - 18), fontName: "Monaco", fontSize: 10)
             
-            repoStartIndex += 1
+            currentRow += 1
             
             // draw authors
-            if let (_, weekday_offset) = sortedDayInfo.last {
-                let (_, offset) = weekday_offset
-                
-                for (authorIndex, author) in authorsInRepo.enumerate() {
-                    // draw author name
-                    c.drawText(
-                        author,
-                        origin: P(LEFT_MARGIN_WIDTH + offset + Constants.COL_WIDTH + 18, c.height() - Constants.TOP_MARGIN_HEIGTH - (repoStartIndex+authorIndex) * ROW_HEIGHT - 15),
-                        fontName: "Monaco",
-                        fontSize: 10)
-                    
-                }
+            for (authorIndex, author) in authorsInRepo.enumerate() {
+                // draw author name
+                c.drawText(
+                    author,
+                    origin: P(legendAndAuthorsXPosition, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow+authorIndex) * ROW_HEIGHT - 15),
+                    fontName: "Monaco",
+                    fontSize: 10)
             }
             
-            // draw background rectangles
+            // draw background cells
+            let weekDayOffsetTuples = sortedDayInfo.map( { $0.1 } ).filter( { weekDaysToSkip.contains($0.0) == false } )
             
-            for (_, t) in sortedDayInfo {
-                
-                let (weekDay, offset) = t
-                
-                if weekDay == 1 || weekDay == 2 { continue }
-                
+            for (_, offset) in weekDayOffsetTuples {
                 for (i, _) in authorsInRepo.enumerate() {
-                    if let rect = rectForDay (
-                        offset,
-                        rowIndex: repoStartIndex+i,
-                        canvasHeight: c.height()
-                        ) {
-                            let fillColor = NSColor.clearColor()
-                            
-                            c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
-                    }
+                    let rect = rectForDay (offset, rowIndex: currentRow+i, canvasHeight: c.height())
+                    c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: NSColor.clearColor())
                 }
             }
             
             // draw activity rectangles
             for (day, authorsDict) in json {
-                
                 for (author, addedRemovedDict) in authorsDict {
-                    
-                    // print("    ", author)
-                    // print("        ", addedRemovedDict["added"])
-                    // print("        ", addedRemovedDict["removed"])
-                    
+
                     var linesChanged = 0
                     
-                    if let added = addedRemovedDict["added"] {
-                        linesChanged += added
-                    }
-                    
-                    if let removed = addedRemovedDict["removed"] {
-                        linesChanged += removed
-                    }
+                    linesChanged +=? addedRemovedDict["added"]
+                    linesChanged +=? addedRemovedDict["removed"]
                     
                     if let (weekDay, offset) = daysInfo[day], indexOfAuthor = authorsInRepo.indexOf(author) {
                         
-                        if (weekDay == 1 || weekDay == 2) { continue }
+                        if weekDaysToSkip.contains(weekDay) { continue }
                         
-                        if let rect = rectForDay(
-                            offset,
-                            rowIndex: repoStartIndex+indexOfAuthor,
-                            canvasHeight: c.height()
-                            ) {
-                                let fillColor = fillColorForLineCountPerDay(linesChanged, baseColor:colorForAuthor(author))
-                                
-                                c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
-                        }
+                        let rect = rectForDay(offset, rowIndex: currentRow+indexOfAuthor, canvasHeight: c.height())
+                        let fillColor = fillColorForLineCountPerDay(linesChanged, baseColor:colorForAuthor(author))
+                        c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
                     }
                 }
             }
             
-            repoStartIndex += authorsInRepo.count
+            currentRow += authorsInRepo.count
         }
         
         c.saveAtPath(outPath)
