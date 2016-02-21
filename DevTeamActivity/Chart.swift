@@ -167,7 +167,7 @@ struct Chart {
         let sortedDayInfo = daysInfo.sort { return $0.0 < $1.0 }
         
         // draw days
-        for (_, v) in daysInfo {
+        for (_, v) in sortedDayInfo {
             let (day, weekDay, offset) = v
             if (weekDay == 1 || weekDay == 2) { continue }
             let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - self.TOP_MARGIN_HEIGTH)
@@ -183,17 +183,15 @@ struct Chart {
         
         var currentRow = 0
         
+        // for each repo
         for (repo, jsonPath) in repoTuples {
             
-            guard let data = NSData(contentsOfFile: jsonPath) else {
-                print("-- no data in \(jsonPath)")
-                continue
-            }
-            guard let optJSON = try? NSJSONSerialization.JSONObjectWithData(data, options: .MutableLeaves) as? AddedRemovedForAuthorForDate else {
-                return
-            }
-            guard let json = optJSON else {
-                return
+            guard let
+                data = NSData(contentsOfFile: jsonPath),
+                optJSON = try? NSJSONSerialization.JSONObjectWithData(data, options: .MutableLeaves) as? AddedRemovedForAuthorForDate,
+                json = optJSON else {
+                    print("-- can't read data in \(jsonPath)")
+                    return
             }
             
             let authorsInRepoSet = Set(json.values.flatMap({ $0.keys }))
@@ -206,7 +204,6 @@ struct Chart {
             
             // draw authors
             for (authorIndex, author) in authorsInRepo.enumerate() {
-                // draw author name
                 c.drawText(
                     author,
                     origin: P(legendAndAuthorsXPosition, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow+authorIndex) * ROW_HEIGHT - 15),
@@ -215,6 +212,7 @@ struct Chart {
             }
             
             // draw cells
+            
             let weekDayOffsetTuples = sortedDayInfo.filter( { weekDaysToSkip.contains($0.1.1) == false } )
             
             // for each day of the timeframe
@@ -228,7 +226,7 @@ struct Chart {
                     var fillColor = NSColor.clearColor()
                     
                     if let addedRemoved = json[day]?[author] {
-                        // data exist for this day and authod
+                        // changes exist for this day and author
                         // change default color accordingly
                         
                         var linesChanged = 0

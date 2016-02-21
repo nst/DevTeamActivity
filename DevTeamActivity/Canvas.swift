@@ -56,7 +56,7 @@ struct Canvas {
         return Int(bitmapImageRep.size.height)
     }
 
-    init?(_ width:Int, _ height:Int, backgroundColor:NSColor?) {
+    init?(_ width:Int, _ height:Int, backgroundColor:NSColor? = nil) {
         let bitmap = NSBitmapImageRep(bitmapDataPlanes:nil,
             pixelsWide:width,
             pixelsHigh:height,
