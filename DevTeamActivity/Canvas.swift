@@ -165,7 +165,7 @@ struct Canvas {
         context.restoreGraphicsState()
     }
     
-    func drawText(text:String, origin:Point, fontName:String = "Monaco", fontSize:Int = 10, rotationAngle:CGFloat = 0.0) {
+    func drawText(text:String, origin:Point, fontName:String = "Monaco", fontSize:Int = 10, rotationRadians:CGFloat = 0.0) {
         
         let p = origin.NSPoint
         
@@ -178,15 +178,15 @@ struct Canvas {
         
         context.saveGraphicsState()
         
-        if(rotationAngle != 0.0) {
+        if(rotationRadians != 0.0) {
             let width = textWidth(text, font:existingFont)
             CGContextTranslateCTM(cgContext, p.x + width / 2.0, p.y);
-            CGContextRotateCTM(cgContext, rotationAngle) // radians
+            CGContextRotateCTM(cgContext, rotationRadians)
             CGContextTranslateCTM(cgContext, -p.x - width / 2.0, -p.y);
         }
         
         CGContextScaleCTM(cgContext, 1.0, -1.0)
-        CGContextTranslateCTM(cgContext, 0.0, CGFloat(-2.0 * Double(origin.y)))
+        CGContextTranslateCTM(cgContext, 0.0, CGFloat(-2.0 * Double(origin.y) - Double(fontSize)))
         
         text.drawAtPoint(p, withAttributes: attr)
         

@@ -118,7 +118,7 @@ struct Chart {
     func drawLegend(c:Canvas, x:Int) {
         
         // draw title
-        c.drawText("Number of Lines Changed", origin: P(x + 10, 20))
+        c.drawText("Number of Lines Changed", origin: P(x + 10, 10))
         
         let numberOfLines = [
             "\(fiveLinesThresholds[0])",
@@ -137,7 +137,7 @@ struct Chart {
             
             c.drawRectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
             
-            let textPoint = P(origin.x + COL_WIDTH + 10, origin.y + 16)
+            let textPoint = P(origin.x + COL_WIDTH + 10, origin.y + 6)
             let s = numberOfLines[i]
             c.drawText(s, origin: textPoint)
         }
@@ -155,7 +155,7 @@ struct Chart {
         // draw days
         for (day, _, offset) in dayTuples {
             let p = P(LEFT_MARGIN_WIDTH + offset, TOP_MARGIN_HEIGTH - 40)
-            c.drawText("\(day)", origin: P(p.x-13, p.y), rotationAngle: CGFloat(-M_PI/2.0))
+            c.drawText("\(day)", origin: P(p.x-22, p.y), rotationRadians: CGFloat(-M_PI/2.0))
         }
         
         // find legend x position
@@ -181,7 +181,7 @@ struct Chart {
             let authorsInRepo = Array(Set(json.values.flatMap({ $0.keys }))).sort()
             
             // draw repo name
-            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 17))
+            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 7))
             
             currentRow += 1
             
@@ -189,7 +189,7 @@ struct Chart {
             for (authorIndex, author) in authorsInRepo.enumerate() {
                 c.drawText(
                     author,
-                    origin: P(legendAndAuthorsXPosition, self.TOP_MARGIN_HEIGTH + (currentRow+authorIndex) * ROW_HEIGHT + 15))
+                    origin: P(legendAndAuthorsXPosition, self.TOP_MARGIN_HEIGTH + (currentRow+authorIndex) * ROW_HEIGHT + 5))
             }
             
             // draw cells
