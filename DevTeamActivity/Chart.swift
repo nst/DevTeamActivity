@@ -67,11 +67,11 @@ struct Chart {
         return daysInfo
     }
     
-    func rectForDay(offset:Int, rowIndex:Int, canvasHeight:Int) -> Rect {
+    func rectForDay(offset:Int, rowIndex:Int) -> Rect {
         
         let p = P(
             self.LEFT_MARGIN_WIDTH + offset,
-            canvasHeight - self.TOP_MARGIN_HEIGTH - (rowIndex+1) * self.ROW_HEIGHT
+            self.TOP_MARGIN_HEIGTH + rowIndex * self.ROW_HEIGHT
         )
         
         return Rect(p, width:self.COL_WIDTH, height:self.ROW_HEIGHT)
@@ -118,7 +118,7 @@ struct Chart {
     func drawLegend(c:Canvas, x:Int) {
         
         // draw title
-        c.drawText("Number of Lines Changed", origin: P(x + 10, c.height() - 25))
+        c.drawText("Number of Lines Changed", origin: P(x + 10, 20))
         
         let numberOfLines = [
             "\(fiveLinesThresholds[0])",
@@ -130,14 +130,14 @@ struct Chart {
         ]
         
         for i in 0...fiveLinesThresholds.count {
-            let origin = P(x + 10 + i/3 * 80, c.height() - 15 - COL_WIDTH - (i%3+1) * self.ROW_HEIGHT)
+            let origin = P(x + 10 + i/3 * 80, COL_WIDTH + (i%3+1) * self.ROW_HEIGHT - 10)
             let r = Rect(origin, width: COL_WIDTH, height: self.ROW_HEIGHT)
             let intensity = CGFloat(i) * 0.2
             let fillColor = NSColor.grayColor().colorWithAlphaComponent(intensity)
             
             c.drawRectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
             
-            let textPoint = P(origin.x + COL_WIDTH + 10, origin.y + 4)
+            let textPoint = P(origin.x + COL_WIDTH + 10, origin.y + 16)
             let s = numberOfLines[i]
             c.drawText(s, origin: textPoint)
         }
@@ -154,8 +154,8 @@ struct Chart {
         
         // draw days
         for (day, _, offset) in dayTuples {
-            let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - self.TOP_MARGIN_HEIGTH)
-            c.drawText("\(day)", origin: P(p.x-13, p.y+35), rotationAngle: CGFloat(M_PI/2.0))
+            let p = P(LEFT_MARGIN_WIDTH + offset, TOP_MARGIN_HEIGTH - 40)
+            c.drawText("\(day)", origin: P(p.x-13, p.y), rotationAngle: CGFloat(-M_PI/2.0))
         }
         
         // find legend x position
@@ -181,7 +181,7 @@ struct Chart {
             let authorsInRepo = Array(Set(json.values.flatMap({ $0.keys }))).sort()
             
             // draw repo name
-            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow) * ROW_HEIGHT - 18))
+            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 17))
             
             currentRow += 1
             
@@ -189,7 +189,7 @@ struct Chart {
             for (authorIndex, author) in authorsInRepo.enumerate() {
                 c.drawText(
                     author,
-                    origin: P(legendAndAuthorsXPosition, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow+authorIndex) * ROW_HEIGHT - 15))
+                    origin: P(legendAndAuthorsXPosition, self.TOP_MARGIN_HEIGTH + (currentRow+authorIndex) * ROW_HEIGHT + 15))
             }
             
             // draw cells
@@ -214,7 +214,7 @@ struct Chart {
                         fillColor = fillColorForLineCountPerDay(linesChanged, baseColor:colorForAuthor(author))
                     }
                     
-                    let rect = rectForDay (offset, rowIndex: currentRow+i, canvasHeight: c.height())
+                    let rect = rectForDay (offset, rowIndex: currentRow+i)
                     c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
                 }
             }

@@ -20,7 +20,7 @@ struct Point {
         self.y = y
     }
     
-    func NSPoint() -> CGPoint {
+    var NSPoint : CGPoint {
         return NSMakePoint(CGFloat(self.x), CGFloat(self.y))
     }
 }
@@ -37,10 +37,9 @@ struct Rect {
         self.height = height
     }
     
-    func NSRect() -> CGRect {
-        return NSMakeRect(CGFloat(self.origin.x), CGFloat(self.origin.y), CGFloat(width), CGFloat(height))
+    var NSRect : CGRect {
+        return NSMakeRect(CGFloat(origin.x), CGFloat(origin.y), CGFloat(width), CGFloat(height))
     }
-    
 }
 
 struct Canvas {
@@ -48,14 +47,22 @@ struct Canvas {
     let bitmapImageRep : NSBitmapImageRep
     let context : NSGraphicsContext
     
-    func width() -> Int {
+    var cgContext : CGContext {
+        return context.CGContext
+    }
+    
+    var width : Int {
         return Int(bitmapImageRep.size.width)
     }
-
-    func height() -> Int {
+    
+    var height : Int {
         return Int(bitmapImageRep.size.height)
     }
-
+    
+    func setAllowsAntialiasing(antialiasing : Bool) {
+        CGContextSetAllowsAntialiasing(cgContext, antialiasing)
+    }
+    
     init?(_ width:Int, _ height:Int, backgroundColor:NSColor? = nil) {
         let bitmap = NSBitmapImageRep(bitmapDataPlanes:nil,
             pixelsWide:width,
@@ -80,27 +87,27 @@ struct Canvas {
         
         NSGraphicsContext.setCurrentContext(context)
         
-        //        CGContextSaveGState(self.context.CGContext)
-        
-        CGContextSetAllowsAntialiasing(self.context.CGContext, false)
-        
-        //        CGContextRestoreGState(self.context.CGContext)
+        setAllowsAntialiasing(false)
         
         if let color = backgroundColor {
             let rect = Rect(P(0,0), width: width, height: height)
             drawRectangle(rect, strokeColor: color, fillColor: color)
         }
+        
+        // coordinates start upper left
+        CGContextTranslateCTM(context!.CGContext, 0.0, CGFloat(height))
+        CGContextScaleCTM(context!.CGContext, 1.0, -1.0)
     }
     
     func drawLineFromPoint(p1:Point, toPoint p2:Point) {
-        NSBezierPath.strokeLineFromPoint(p1.NSPoint(), toPoint:p2.NSPoint())
+        NSBezierPath.strokeLineFromPoint(p1.NSPoint, toPoint:p2.NSPoint)
     }
     
     func drawVerticalLine(p p1:Point, deltaY:Int) {
         let p2 = Point(p1.x, p1.y + deltaY)
         self.drawLineFromPoint(p1, toPoint: p2)
     }
-
+    
     func drawHorizontalLine(p p1:Point, deltaX:Int) {
         let p2 = Point(p1.x + deltaX, p1.y)
         self.drawLineFromPoint(p1, toPoint: p2)
@@ -112,24 +119,23 @@ struct Canvas {
     }
     
     func drawRectangle(rect:Rect) {
-        NSBezierPath.strokeRect(rect.NSRect())
+        NSBezierPath.strokeRect(rect.NSRect)
     }
     
     func drawRectangle(rect:Rect, strokeColor:NSColor, fillColor:NSColor) {
-        
         context.saveGraphicsState()
         
         fillColor.setFill()
-        NSBezierPath.fillRect(rect.NSRect())
+        NSBezierPath.fillRect(rect.NSRect)
         
         strokeColor.setStroke()
-        NSBezierPath.strokeRect(rect.NSRect())
-        
+        NSBezierPath.strokeRect(rect.NSRect)
+
         context.restoreGraphicsState()
     }
     
     func saveAtPath(path:String) -> Bool {
-        if let data = self.bitmapImageRep.representationUsingType(NSBitmapImageFileType.NSPNGFileType, properties: [:]) {
+        if let data = bitmapImageRep.representationUsingType(NSBitmapImageFileType.NSPNGFileType, properties: [:]) {
             return data.writeToFile(path, atomically: false)
         }
         return false
@@ -145,9 +151,23 @@ struct Canvas {
         return textRect.size.width
     }
     
+    func drawImageAtPath(path:String, origin:Point) {
+        context.saveGraphicsState()
+        
+        let data = NSData(contentsOfFile:path)
+        let imgRep = NSBitmapImageRep(data: data!)
+        
+        CGContextScaleCTM(cgContext, 1.0, -1.0)
+        CGContextTranslateCTM(cgContext, 0.0, CGFloat(-2.0 * (Double(origin.y))) - CGFloat(imgRep!.pixelsHigh))
+        
+        imgRep?.drawInRect(NSMakeRect(CGFloat(origin.x), CGFloat(origin.y), CGFloat(imgRep!.pixelsWide), CGFloat(imgRep!.pixelsHigh)))
+        
+        context.restoreGraphicsState()
+    }
+    
     func drawText(text:String, origin:Point, fontName:String = "Monaco", fontSize:Int = 10, rotationAngle:CGFloat = 0.0) {
         
-        let p = origin.NSPoint()
+        let p = origin.NSPoint
         
         guard let existingFont = NSFont(name: fontName, size: CGFloat(fontSize)) else { return }
         
@@ -156,17 +176,20 @@ struct Canvas {
             NSForegroundColorAttributeName:NSColor.blackColor()
         ]
         
-        CGContextSaveGState(context.CGContext)
+        context.saveGraphicsState()
         
         if(rotationAngle != 0.0) {
             let width = textWidth(text, font:existingFont)
-            CGContextTranslateCTM(context.CGContext, p.x + width / 2.0, p.y);
-            CGContextRotateCTM(context.CGContext, rotationAngle) // radians
-            CGContextTranslateCTM(context.CGContext, -p.x - width / 2.0, -p.y);
+            CGContextTranslateCTM(cgContext, p.x + width / 2.0, p.y);
+            CGContextRotateCTM(cgContext, rotationAngle) // radians
+            CGContextTranslateCTM(cgContext, -p.x - width / 2.0, -p.y);
         }
+        
+        CGContextScaleCTM(cgContext, 1.0, -1.0)
+        CGContextTranslateCTM(cgContext, 0.0, CGFloat(-2.0 * Double(origin.y)))
         
         text.drawAtPoint(p, withAttributes: attr)
         
-        CGContextRestoreGState(context.CGContext)
+        context.restoreGraphicsState()
     }
 }
