@@ -106,7 +106,7 @@ struct Bitmap {
         
         NSGraphicsContext.setCurrentContext(context)
         
-        // setAllowsAntialiasing(true)
+        setAllowsAntialiasing(false)
         
         if let color = backgroundColor {
             let rect = NSMakeRect(0, 0, CGFloat(width), CGFloat(height))
@@ -166,10 +166,6 @@ struct Bitmap {
     func line(p1:NSPoint, deltaX:CGFloat, deltaY:CGFloat, color:NSColor? = nil) {
         let p2 = P(p1.x + deltaX, p1.y + deltaY)
         self.line(p1, p2)
-    }
-    
-    func rectangle(t:(x:CGFloat, y:CGFloat, w:CGFloat, h:CGFloat)) {
-        return rectangle(NSMakeRect(t.x, t.y, t.w, t.h))
     }
     
     func rectangle(rect:NSRect) {
