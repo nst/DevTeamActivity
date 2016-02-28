@@ -1,6 +1,6 @@
 //
 //  main.swift
-//  Canvas
+//  BitmapCanvas
 //
 //  Created by nst on 04/01/16.
 //  Copyright © 2016 Nicolas Seriot. All rights reserved.
@@ -68,7 +68,7 @@ func R(x:CGFloat, _ y:CGFloat, _ w:CGFloat, _ h:CGFloat) -> NSRect {
     return NSMakeRect(x, y, w, h)
 }
 
-struct Bitmap {
+struct BitmapCanvas {
     
     let bitmapImageRep : NSBitmapImageRep
     let context : NSGraphicsContext
@@ -119,20 +119,7 @@ struct Bitmap {
     }
     
     func point(p:NSPoint, color:NSColor? = nil) {
-        context.saveGraphicsState()
-        
-        // align to the pixel grid
-        CGContextTranslateCTM(cgContext, -0.5, -0.5)
-        
-        if let existingColor = color {
-            CGContextSetStrokeColorWithColor(cgContext, existingColor.CGColor);
-        }
-        CGContextSetLineCap(cgContext, .Square)
-        CGContextMoveToPoint(cgContext, p.x, p.y)
-        CGContextAddLineToPoint(cgContext, p.x, p.y)
-        CGContextStrokePath(cgContext)
-        
-        context.restoreGraphicsState()
+        lineHorizontal(p, width: 1, color: color)
     }
     
     func line(p1:NSPoint, _ p2:NSPoint, color:NSColor? = NSColor.blackColor()) {
@@ -154,12 +141,12 @@ struct Bitmap {
     }
     
     func lineVertical(p1:NSPoint, height:CGFloat, color:NSColor? = nil) {
-        let p2 = P(p1.x, p1.y + height)
+        let p2 = P(p1.x, p1.y + height - 1)
         self.line(p1, p2, color:color)
     }
     
     func lineHorizontal(p1:NSPoint, width:CGFloat, color:NSColor? = nil) {
-        let p2 = P(p1.x + width, p1.y)
+        let p2 = P(p1.x + width - 1, p1.y)
         self.line(p1, p2, color:color)
     }
     
@@ -197,7 +184,7 @@ struct Bitmap {
     }
     
     func save(path:String) -> Bool {
-        guard let data = bitmapImageRep.representationUsingType(NSBitmapImageFileType.NSPNGFileType, properties: [:]) else {
+        guard let data = bitmapImageRep.representationUsingType(.NSPNGFileType, properties: [:]) else {
             print("\(__FILE__) \(__FUNCTION__) cannot get PNG data from bitmap")
             return false
         }
@@ -238,7 +225,7 @@ struct Bitmap {
         context.restoreGraphicsState()
     }
     
-    func text(text:String, _ p:NSPoint, rotationRadians:CGFloat?, font : NSFont = NSFont(name: "Monaco", size: 10)!, color : NSColor = NSColor.blackColor()) {
+    func text(text:String, _ p:NSPoint, rotationRadians:CGFloat?, font : NSFont = NSFont(name: "Monaco", size: 10)!, color : NSColor = NSColor.blackColor(), allowsAntialiasing : Bool = false) {
         
         let attr = [
             NSFontAttributeName:font,
@@ -256,16 +243,14 @@ struct Bitmap {
         CGContextScaleCTM(cgContext, 1.0, -1.0)
         CGContextTranslateCTM(cgContext, 0.0, -2.0 * p.y - font.pointSize)
         
-        CGContextSetAllowsAntialiasing(cgContext, false)
+        CGContextSetAllowsAntialiasing(cgContext, allowsAntialiasing)
         
         text.drawAtPoint(p, withAttributes: attr)
-        
-        CGContextSetAllowsAntialiasing(cgContext, true)
         
         context.restoreGraphicsState()
     }
     
-    func text(text:String, _ p:NSPoint, rotationDegrees degrees:CGFloat = 0.0, font : NSFont = NSFont(name: "Monaco", size: 10)!, color : NSColor = NSColor.blackColor()) {
+    func text(text:String, _ p:NSPoint, rotationDegrees degrees:CGFloat = 0.0, font : NSFont = NSFont(name: "Monaco", size: 10)!, color : NSColor = NSColor.blackColor(), allowsAntialiasing : Bool = false) {
         self.text(text, p, rotationRadians: degreesToRadians(degrees), font: font, color: color)
     }
 }

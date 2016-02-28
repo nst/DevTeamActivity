@@ -113,10 +113,10 @@ struct Chart {
         return Chart.colorForAuthors[author]!
     }
     
-    func drawLegend(b:Bitmap, x:CGFloat) {
+    func drawLegend(bc:BitmapCanvas, x:CGFloat) {
         
         // draw title
-        b.text("Number of Lines Changed", P(x + 10, 10))
+        bc.text("Number of Lines Changed", P(x + 10, 10))
         
         let numberOfLines = [
             "\(fiveLinesThresholds[0])",
@@ -133,24 +133,24 @@ struct Chart {
             let intensity = i * 0.2
             let fillColor = NSColor.grayColor().colorWithAlphaComponent(intensity)
             
-            b.rectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
+            bc.rectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
             
             let textPoint = P(p.x + COL_WIDTH + 10, p.y + 6)
             let s = numberOfLines[i]
-            b.text(s, textPoint)
+            bc.text(s, textPoint)
         }
     }
     
     func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
-        let bitmap = Bitmap(880,560, backgroundColor: NSColor.whiteColor())
+        let bitmapCanvas = BitmapCanvas(880,560, backgroundColor: NSColor.whiteColor())
         
         let dayTuples = daysTuplesFromDay(fromDay, toDay:toDay).filter( { weekDaysToSkip.contains($0.weekDay) == false } )
         
         // draw days
         for (day, _, offset) in dayTuples {
             let p = P(LEFT_MARGIN_WIDTH + offset, TOP_MARGIN_HEIGTH - 10)
-            bitmap.text("\(day)", P(p.x+7, p.y), rotationDegrees:-90)
+            bitmapCanvas.text("\(day)", P(p.x+7, p.y), rotationDegrees:-90)
         }
         
         // find legend x position
@@ -158,7 +158,7 @@ struct Chart {
         let legendAndAuthorsXPosition = LEFT_MARGIN_WIDTH + offset + COL_WIDTH + 18
         
         // draw legend
-        self.drawLegend(bitmap, x: legendAndAuthorsXPosition)
+        self.drawLegend(bitmapCanvas, x: legendAndAuthorsXPosition)
         
         var currentRow = 0
         
@@ -176,13 +176,13 @@ struct Chart {
             let authorsInRepo = Array(Set(json.values.flatMap({ $0.keys }))).sort()
             
             // draw repo name
-            bitmap.text(repoName, P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 7))
+            bitmapCanvas.text(repoName, P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 7))
             
             currentRow += 1
             
             // draw authors
             for (authorIndex, author) in authorsInRepo.enumerate() {
-                bitmap.text(
+                bitmapCanvas.text(
                     author,
                     P(legendAndAuthorsXPosition, self.TOP_MARGIN_HEIGTH + (currentRow+authorIndex) * ROW_HEIGHT + 5))
             }
@@ -210,13 +210,13 @@ struct Chart {
                     }
                     
                     let rect = rectForDay (offset, rowIndex: currentRow+i)
-                    bitmap.rectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
+                    bitmapCanvas.rectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
                 }
             }
             
             currentRow += authorsInRepo.count
         }
         
-        bitmap.save(outPath)
+        bitmapCanvas.save(outPath)
     }
 }
