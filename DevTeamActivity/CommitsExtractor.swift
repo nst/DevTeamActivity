@@ -8,6 +8,25 @@
 
 import Foundation
 
+extension NSRegularExpression {
+    class func findAll(string s: String, pattern: String) throws -> [String] {
+        
+        let regex = try NSRegularExpression(pattern: pattern, options: [])
+        let matches = regex.matchesInString(s, options: [], range: NSMakeRange(0, s.characters.count))
+        
+        var results : [String] = []
+        
+        for m in matches {
+            for i in 1..<m.numberOfRanges {
+                let range = m.rangeAtIndex(i)
+                results.append((s as NSString).substringWithRange(range))
+            }
+        }
+        
+        return results
+    }
+}
+
 enum Error : ErrorType {
     case BadFormat
     case BadValues
@@ -82,8 +101,8 @@ enum VCS {
             } else {
                 print(line)
                 
-                let insertions = try matches(string: line, pattern: "\\s(\\d+?)\\sinsertion")
-                let deletions = try matches(string: line, pattern: "\\s(\\d+?)\\sdeletion")
+                let insertions = try NSRegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sinsertion")
+                let deletions = try NSRegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sdeletion")
                 
                 if let insertionsCount = insertions.first where insertions.count == 1 {
                     added = Int(insertionsCount)
@@ -129,7 +148,7 @@ enum VCS {
                 continue
             }
             
-            let groups = try matches(string: line, pattern: "(\\S*)\\s(\\S*)\\s\\d*:\\s\\+(\\d*).-(\\d*)")
+            let groups = try NSRegularExpression.findAll(string: line, pattern: "(\\S*)\\s(\\S*)\\s\\d*:\\s\\+(\\d*).-(\\d*)")
             guard groups.count == 4 else {
                 print(groups)
                 throw Error.BadFormat
@@ -149,24 +168,6 @@ enum VCS {
         return results
     }
     
-}
-
-func matches(string s: String, pattern: String) throws -> [String] {
-    
-    let regex = try NSRegularExpression(pattern: pattern, options: [])
-    let matches = regex.matchesInString(s, options: [], range: NSMakeRange(0, s.characters.count))
-    
-    guard matches.count > 0 else { return [] }
-    
-    let textCheckingResult = matches[0]
-    
-    var results = [String]()
-    
-    for index in 1..<textCheckingResult.numberOfRanges {
-        results.append((s as NSString).substringWithRange(textCheckingResult.rangeAtIndex(index)))
-    }
-    
-    return results
 }
 
 typealias AddedRemoved = [String:Int]
