@@ -10,7 +10,7 @@
 		03CEB0611C73EE38007519C4 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB0601C73EE38007519C4 /* main.swift */; };
 		03CEB06B1C73EE50007519C4 /* CommitsExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */; };
 		03CEB06C1C73EE50007519C4 /* Chart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06A1C73EE50007519C4 /* Chart.swift */; };
-		03CEB0701C73F226007519C4 /* Canvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06F1C73F226007519C4 /* Canvas.swift */; };
+		03CEB0701C73F226007519C4 /* BitmapCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,7 +30,7 @@
 		03CEB0601C73EE38007519C4 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommitsExtractor.swift; sourceTree = "<group>"; };
 		03CEB06A1C73EE50007519C4 /* Chart.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Chart.swift; sourceTree = "<group>"; };
-		03CEB06F1C73F226007519C4 /* Canvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Canvas.swift; sourceTree = "<group>"; };
+		03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BitmapCanvas.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,7 +63,7 @@
 		03CEB05F1C73EE38007519C4 /* DevTeamActivity */ = {
 			isa = PBXGroup;
 			children = (
-				03CEB06F1C73F226007519C4 /* Canvas.swift */,
+				03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */,
 				03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */,
 				03CEB06A1C73EE50007519C4 /* Chart.swift */,
 				03CEB0601C73EE38007519C4 /* main.swift */,
@@ -131,7 +131,7 @@
 				03CEB06C1C73EE50007519C4 /* Chart.swift in Sources */,
 				03CEB0611C73EE38007519C4 /* main.swift in Sources */,
 				03CEB06B1C73EE50007519C4 /* CommitsExtractor.swift in Sources */,
-				03CEB0701C73F226007519C4 /* Canvas.swift in Sources */,
+				03CEB0701C73F226007519C4 /* BitmapCanvas.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

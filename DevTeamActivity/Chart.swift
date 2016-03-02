@@ -17,10 +17,10 @@ func +=? (inout left: Int, right: Int?) {
 
 struct Chart {
     
-    let COL_WIDTH = 20
-    let ROW_HEIGHT = 20
-    let LEFT_MARGIN_WIDTH = 20
-    let TOP_MARGIN_HEIGTH = 100
+    let COL_WIDTH : CGFloat = 20
+    let ROW_HEIGHT : CGFloat = 20
+    let LEFT_MARGIN_WIDTH : CGFloat = 20
+    let TOP_MARGIN_HEIGTH : CGFloat = 100
     
     let fiveLinesThresholds = [0, 1000, 2500, 4000, 5000]
     
@@ -33,11 +33,11 @@ struct Chart {
         return df
     }()
     
-    func daysTuplesFromDay(fromDay:String, toDay:String) -> [(day:String, weekDay:Int, offset:Int)] {
+    func daysTuplesFromDay(fromDay:String, toDay:String) -> [(day:String, weekDay:Int, offset:CGFloat)] {
         
         let calendar = NSCalendar.currentCalendar()
         
-        var daysInfo : [(day:String, weekDay:Int, offset:Int)] = []
+        var daysInfo : [(day:String, weekDay:Int, offset:CGFloat)] = []
         
         let matchingComponents = NSDateComponents()
         matchingComponents.hour = 0
@@ -45,7 +45,7 @@ struct Chart {
         guard let fromDate = self.dateFormatter.dateFromString(fromDay) else { assertionFailure(); return [] }
         guard let toDate = self.dateFormatter.dateFromString(toDay) else { assertionFailure(); return [] }
         
-        var xOffset = 0
+        var xOffset : CGFloat = 0
         
         calendar.enumerateDatesStartingAfterDate(fromDate, matchingComponents: matchingComponents, options: .MatchStrictly) { (date: NSDate?, exactMatch: Bool, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
             
@@ -67,14 +67,12 @@ struct Chart {
         return daysInfo
     }
     
-    func rectForDay(offset:Int, rowIndex:Int, canvasHeight:Int) -> Rect {
+    func rectForDay(offset:CGFloat, rowIndex:Int) -> NSRect {
         
-        let p = P(
-            self.LEFT_MARGIN_WIDTH + offset,
-            canvasHeight - self.TOP_MARGIN_HEIGTH - (rowIndex+1) * self.ROW_HEIGHT
-        )
+        let x = self.LEFT_MARGIN_WIDTH + offset
+        let y = self.TOP_MARGIN_HEIGTH + rowIndex * self.ROW_HEIGHT
         
-        return Rect(p, width:self.COL_WIDTH, height:self.ROW_HEIGHT)
+        return NSMakeRect(x, y, self.COL_WIDTH, self.ROW_HEIGHT)
     }
     
     func fillColorForLineCountPerDay(count:Int, baseColor:NSColor) -> NSColor {
@@ -115,10 +113,10 @@ struct Chart {
         return Chart.colorForAuthors[author]!
     }
     
-    func drawLegend(c:Canvas, x:Int) {
+    func drawLegend(bc:BitmapCanvas, x:CGFloat) {
         
         // draw title
-        c.drawText("Number of Lines Changed", origin: P(x + 10, c.height() - 25))
+        bc.text("Number of Lines Changed", P(x + 10, 10))
         
         let numberOfLines = [
             "\(fiveLinesThresholds[0])",
@@ -130,32 +128,29 @@ struct Chart {
         ]
         
         for i in 0...fiveLinesThresholds.count {
-            let origin = P(x + 10 + i/3 * 80, c.height() - 15 - COL_WIDTH - (i%3+1) * self.ROW_HEIGHT)
-            let r = Rect(origin, width: COL_WIDTH, height: self.ROW_HEIGHT)
-            let intensity = CGFloat(i) * 0.2
+            let p = P(x + 10 + i/3 * 80, COL_WIDTH + (i%3+1) * self.ROW_HEIGHT - 10)
+            let r = NSMakeRect(p.x, p.y, self.COL_WIDTH, self.ROW_HEIGHT)
+            let intensity = i * 0.2
             let fillColor = NSColor.grayColor().colorWithAlphaComponent(intensity)
             
-            c.drawRectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
+            bc.rectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
             
-            let textPoint = P(origin.x + COL_WIDTH + 10, origin.y + 4)
+            let textPoint = P(p.x + COL_WIDTH + 10, p.y + 6)
             let s = numberOfLines[i]
-            c.drawText(s, origin: textPoint)
+            bc.text(s, textPoint)
         }
     }
     
     func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
-        guard let c = Canvas(880,560, backgroundColor: NSColor.whiteColor()) else {
-            assertionFailure()
-            return
-        }
+        let bitmapCanvas = BitmapCanvas(880,560, backgroundColor: NSColor.whiteColor())
         
         let dayTuples = daysTuplesFromDay(fromDay, toDay:toDay).filter( { weekDaysToSkip.contains($0.weekDay) == false } )
         
         // draw days
         for (day, _, offset) in dayTuples {
-            let p = P(LEFT_MARGIN_WIDTH + offset, c.height() - self.TOP_MARGIN_HEIGTH)
-            c.drawText("\(day)", origin: P(p.x-13, p.y+35), rotationAngle: CGFloat(M_PI/2.0))
+            let p = P(LEFT_MARGIN_WIDTH + offset, TOP_MARGIN_HEIGTH - 10)
+            bitmapCanvas.text("\(day)", P(p.x+7, p.y), rotationDegrees:-90)
         }
         
         // find legend x position
@@ -163,12 +158,12 @@ struct Chart {
         let legendAndAuthorsXPosition = LEFT_MARGIN_WIDTH + offset + COL_WIDTH + 18
         
         // draw legend
-        self.drawLegend(c, x: legendAndAuthorsXPosition)
+        self.drawLegend(bitmapCanvas, x: legendAndAuthorsXPosition)
         
         var currentRow = 0
         
         // for each repo
-        for (repo, jsonPath) in repoTuples {
+        for (repoName, jsonPath) in repoTuples {
             
             guard let
                 data = NSData(contentsOfFile: jsonPath),
@@ -181,15 +176,15 @@ struct Chart {
             let authorsInRepo = Array(Set(json.values.flatMap({ $0.keys }))).sort()
             
             // draw repo name
-            c.drawText(repo, origin: P(LEFT_MARGIN_WIDTH, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow) * ROW_HEIGHT - 18))
+            bitmapCanvas.text(repoName, P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 7))
             
             currentRow += 1
             
             // draw authors
             for (authorIndex, author) in authorsInRepo.enumerate() {
-                c.drawText(
+                bitmapCanvas.text(
                     author,
-                    origin: P(legendAndAuthorsXPosition, c.height() - self.TOP_MARGIN_HEIGTH - (currentRow+authorIndex) * ROW_HEIGHT - 15))
+                    P(legendAndAuthorsXPosition, self.TOP_MARGIN_HEIGTH + (currentRow+authorIndex) * ROW_HEIGHT + 5))
             }
             
             // draw cells
@@ -214,14 +209,14 @@ struct Chart {
                         fillColor = fillColorForLineCountPerDay(linesChanged, baseColor:colorForAuthor(author))
                     }
                     
-                    let rect = rectForDay (offset, rowIndex: currentRow+i, canvasHeight: c.height())
-                    c.drawRectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
+                    let rect = rectForDay (offset, rowIndex: currentRow+i)
+                    bitmapCanvas.rectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
                 }
             }
             
             currentRow += authorsInRepo.count
         }
         
-        c.saveAtPath(outPath)
+        bitmapCanvas.save(outPath)
     }
 }
