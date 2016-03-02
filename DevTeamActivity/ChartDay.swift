@@ -8,14 +8,7 @@
 
 import Cocoa
 
-infix operator +=? { associativity right precedence 90 }
-func +=? (inout left: Int, right: Int?) {
-    if let existingRight = right {
-        left = left + existingRight
-    }
-}
-
-struct Chart {
+struct ChartDay {
     
     let COL_WIDTH : CGFloat = 20
     let ROW_HEIGHT : CGFloat = 20
@@ -105,12 +98,12 @@ struct Chart {
     
     func colorForAuthor(author:String) -> NSColor {
         
-        if Chart.colorForAuthors[author] == nil {
-            let color = Chart.colorPalette.popLast() ?? NSColor.darkGrayColor()
-            Chart.colorForAuthors[author] = color
+        if ChartDay.colorForAuthors[author] == nil {
+            let color = ChartDay.colorPalette.popLast() ?? NSColor.darkGrayColor()
+            ChartDay.colorForAuthors[author] = color
         }
         
-        return Chart.colorForAuthors[author]!
+        return ChartDay.colorForAuthors[author]!
     }
     
     func drawLegend(bc:BitmapCanvas, x:CGFloat) {
