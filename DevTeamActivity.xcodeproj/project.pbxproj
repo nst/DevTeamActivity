@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03464F3D1C87A58A00F6C5F2 /* ChartMonth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03464F3C1C87A58A00F6C5F2 /* ChartMonth.swift */; };
+		03464F3F1C87A5B600F6C5F2 /* Chart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03464F3E1C87A5B600F6C5F2 /* Chart.swift */; };
 		03CEB0611C73EE38007519C4 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB0601C73EE38007519C4 /* main.swift */; };
 		03CEB06B1C73EE50007519C4 /* CommitsExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */; };
-		03CEB06C1C73EE50007519C4 /* Chart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06A1C73EE50007519C4 /* Chart.swift */; };
+		03CEB06C1C73EE50007519C4 /* ChartDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06A1C73EE50007519C4 /* ChartDay.swift */; };
 		03CEB0701C73F226007519C4 /* BitmapCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */; };
 /* End PBXBuildFile section */
 
@@ -26,10 +28,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		03464F3C1C87A58A00F6C5F2 /* ChartMonth.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartMonth.swift; sourceTree = "<group>"; };
+		03464F3E1C87A5B600F6C5F2 /* Chart.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Chart.swift; sourceTree = "<group>"; };
 		03CEB05D1C73EE38007519C4 /* DevTeamActivity */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DevTeamActivity; sourceTree = BUILT_PRODUCTS_DIR; };
 		03CEB0601C73EE38007519C4 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommitsExtractor.swift; sourceTree = "<group>"; };
-		03CEB06A1C73EE50007519C4 /* Chart.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Chart.swift; sourceTree = "<group>"; };
+		03CEB06A1C73EE50007519C4 /* ChartDay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartDay.swift; sourceTree = "<group>"; };
 		03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BitmapCanvas.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -65,7 +69,9 @@
 			children = (
 				03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */,
 				03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */,
-				03CEB06A1C73EE50007519C4 /* Chart.swift */,
+				03464F3E1C87A5B600F6C5F2 /* Chart.swift */,
+				03CEB06A1C73EE50007519C4 /* ChartDay.swift */,
+				03464F3C1C87A58A00F6C5F2 /* ChartMonth.swift */,
 				03CEB0601C73EE38007519C4 /* main.swift */,
 			);
 			path = DevTeamActivity;
@@ -128,7 +134,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				03CEB06C1C73EE50007519C4 /* Chart.swift in Sources */,
+				03CEB06C1C73EE50007519C4 /* ChartDay.swift in Sources */,
+				03464F3D1C87A58A00F6C5F2 /* ChartMonth.swift in Sources */,
+				03464F3F1C87A5B600F6C5F2 /* Chart.swift in Sources */,
 				03CEB0611C73EE38007519C4 /* main.swift in Sources */,
 				03CEB06B1C73EE50007519C4 /* CommitsExtractor.swift in Sources */,
 				03CEB0701C73F226007519C4 /* BitmapCanvas.swift in Sources */,

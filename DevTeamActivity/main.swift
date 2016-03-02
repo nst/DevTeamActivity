@@ -22,18 +22,16 @@ func extractData() {
             print("->", path)
         }
     }
-    
-    //    CFRunLoopRun()
 }
 
 func draw() {
     
-    let fromDay = "2016-01-01"
-    let toDay = "2016-02-15"
+    let fromDay = "2011-01-01"
+    let toDay = "2016-02-29"
     
     var repoTuples : [(repo:String, jsonPath:String)] = []
     
-    for s in ["repo1", "repo2", "repo3"] {
+    for s in ["swift"] {
         let path = ("~/Desktop/\(s)_\(fromDay)_\(toDay).json" as NSString).stringByExpandingTildeInPath
         let t = (repo:s, jsonPath:path)
         repoTuples.append(t)
@@ -41,7 +39,7 @@ func draw() {
     
     let outPath = ("~/Desktop/team_activity_\(fromDay)_\(toDay).png" as NSString).stringByExpandingTildeInPath
     
-    try! Chart().drawTimeline(fromDay:fromDay, toDay:toDay, repoTuples: repoTuples, outPath:outPath)
+    try! ChartMonth().drawTimeline(fromDay:fromDay, toDay:toDay, repoTuples: repoTuples, outPath:outPath)
     
     print(outPath)
     
@@ -49,6 +47,6 @@ func draw() {
     
 }
 
-extractData()
+//extractData()
 
 draw()
