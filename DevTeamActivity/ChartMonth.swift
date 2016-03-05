@@ -87,8 +87,8 @@ struct ChartMonth {
                 // add the number of lines changed into monthYearDictionary
                 
                 var linesChanged = 0
-                linesChanged +=? addedRemoved["added"]
-                linesChanged +=? addedRemoved["removed"]
+                linesChanged += addedRemoved["added"] ?? 0
+                linesChanged += addedRemoved["removed"] ?? 0
                 
                 //
                 

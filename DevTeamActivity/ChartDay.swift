@@ -196,8 +196,9 @@ struct ChartDay {
                         // set the cell color accordingly
                         
                         var linesChanged = 0
-                        linesChanged +=? addedRemoved["added"]
-                        linesChanged +=? addedRemoved["removed"]
+                        
+                        linesChanged += addedRemoved["added"] ?? 0
+                        linesChanged += addedRemoved["removed"] ?? 0
                         
                         fillColor = fillColorForLineCountPerDay(linesChanged, baseColor:colorForAuthor(author))
                     }
