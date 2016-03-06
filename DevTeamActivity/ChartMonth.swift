@@ -160,7 +160,7 @@ struct ChartMonth {
             let intensity = i * 0.2
             let fillColor = NSColor.orangeColor().colorWithAlphaComponent(intensity)
             
-            bc.rectangle(r, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
+            bc.rectangle(r, stroke: NSColor.lightGrayColor(), fill: fillColor)
             
             let textPoint = P(p.x + COL_WIDTH + 10, p.y + 6)
             let s = numberOfLines[i]
@@ -183,7 +183,7 @@ struct ChartMonth {
     
     func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
-        let bitmapCanvas = BitmapCanvas(1400,5700, backgroundColor: NSColor.whiteColor())
+        let bitmapCanvas = BitmapCanvas(1400,5700, "white")
         
         let monthYearTuples = monthYearTuplesFromDay(fromDay, toDay:toDay)
         
@@ -248,7 +248,7 @@ struct ChartMonth {
                     }
                     
                     let rect = rectForDay (offset, rowIndex: currentRow+i)
-                    bitmapCanvas.rectangle(rect, strokeColor: NSColor.lightGrayColor(), fillColor: fillColor)
+                    bitmapCanvas.rectangle(rect, stroke: NSColor.lightGrayColor(), fill: fillColor)
                 }
             }
             

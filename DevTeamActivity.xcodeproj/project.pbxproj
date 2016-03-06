@@ -11,7 +11,8 @@
 		03CEB0611C73EE38007519C4 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB0601C73EE38007519C4 /* main.swift */; };
 		03CEB06B1C73EE50007519C4 /* CommitsExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */; };
 		03CEB06C1C73EE50007519C4 /* ChartDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06A1C73EE50007519C4 /* ChartDay.swift */; };
-		03CEB0701C73F226007519C4 /* BitmapCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */; };
+		03E834FC1C8C802A00FAC6AD /* BitmapCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E834FA1C8C802A00FAC6AD /* BitmapCanvas.swift */; };
+		03E834FD1C8C802A00FAC6AD /* X11Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E834FB1C8C802A00FAC6AD /* X11Colors.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,7 +33,8 @@
 		03CEB0601C73EE38007519C4 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommitsExtractor.swift; sourceTree = "<group>"; };
 		03CEB06A1C73EE50007519C4 /* ChartDay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartDay.swift; sourceTree = "<group>"; };
-		03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BitmapCanvas.swift; sourceTree = "<group>"; };
+		03E834FA1C8C802A00FAC6AD /* BitmapCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BitmapCanvas.swift; path = DevTeamActivity/BitmapCanvas.swift; sourceTree = "<group>"; };
+		03E834FB1C8C802A00FAC6AD /* X11Colors.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = X11Colors.swift; path = DevTeamActivity/X11Colors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +51,8 @@
 		03CEB0541C73EE38007519C4 = {
 			isa = PBXGroup;
 			children = (
+				03E834FB1C8C802A00FAC6AD /* X11Colors.swift */,
+				03E834FA1C8C802A00FAC6AD /* BitmapCanvas.swift */,
 				03CEB05F1C73EE38007519C4 /* DevTeamActivity */,
 				03CEB05E1C73EE38007519C4 /* Products */,
 			);
@@ -65,7 +69,6 @@
 		03CEB05F1C73EE38007519C4 /* DevTeamActivity */ = {
 			isa = PBXGroup;
 			children = (
-				03CEB06F1C73F226007519C4 /* BitmapCanvas.swift */,
 				03CEB0691C73EE50007519C4 /* CommitsExtractor.swift */,
 				03CEB06A1C73EE50007519C4 /* ChartDay.swift */,
 				03464F3C1C87A58A00F6C5F2 /* ChartMonth.swift */,
@@ -135,7 +138,8 @@
 				03464F3D1C87A58A00F6C5F2 /* ChartMonth.swift in Sources */,
 				03CEB0611C73EE38007519C4 /* main.swift in Sources */,
 				03CEB06B1C73EE50007519C4 /* CommitsExtractor.swift in Sources */,
-				03CEB0701C73F226007519C4 /* BitmapCanvas.swift in Sources */,
+				03E834FD1C8C802A00FAC6AD /* X11Colors.swift in Sources */,
+				03E834FC1C8C802A00FAC6AD /* BitmapCanvas.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

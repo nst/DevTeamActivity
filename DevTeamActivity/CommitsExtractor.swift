@@ -8,8 +8,8 @@
 
 import Foundation
 
-extension NSRegularExpression {
-    class func findAll(string s: String, pattern: String) throws -> [String] {
+struct RegularExpression {
+    static func findAll(string s: String, pattern: String) throws -> [String] {
         
         let regex = try NSRegularExpression(pattern: pattern, options: [])
         let matches = regex.matchesInString(s, options: [], range: NSMakeRange(0, s.characters.count))
@@ -101,8 +101,8 @@ enum VCS {
             } else {
                 print(line)
                 
-                let insertions = try NSRegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sinsertion")
-                let deletions = try NSRegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sdeletion")
+                let insertions = try RegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sinsertion")
+                let deletions = try RegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sdeletion")
                 
                 if let insertionsCount = insertions.first where insertions.count == 1 {
                     added = Int(insertionsCount)
@@ -148,7 +148,7 @@ enum VCS {
                 continue
             }
             
-            let groups = try NSRegularExpression.findAll(string: line, pattern: "(\\S*)\\s(\\S*)\\s\\d*:\\s\\+(\\d*).-(\\d*)")
+            let groups = try RegularExpression.findAll(string: line, pattern: "(\\S*)\\s(\\S*)\\s\\d*:\\s\\+(\\d*).-(\\d*)")
             guard groups.count == 4 else {
                 print(groups)
                 throw Error.BadFormat

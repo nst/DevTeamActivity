@@ -12,13 +12,11 @@ import AppKit
 func extractData() {
     
     let repos = [
-        "/Users/nst/Projects/repo1",
-        "/Users/nst/Projects/repo2",
-        "/Users/nst/Projects/repo3"
+        "/Users/nst/Projects/swift"
     ]
     
     for path in repos {
-        extractCommits(.Mercurial, repositoryPath: path, fromDay: "2016-01-01", toDay: "2016-02-15") { (path) -> () in
+        extractCommits(.Git, repositoryPath: path, fromDay: "2011-01-01", toDay: "2016-02-29") { (path) -> () in
             print("->", path)
         }
     }
@@ -47,6 +45,6 @@ func draw() {
     
 }
 
-//extractData()
+extractData()
 
 draw()
