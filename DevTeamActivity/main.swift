@@ -16,7 +16,7 @@ func extractData() {
     ]
     
     for path in repos {
-        extractCommits(.Git, repositoryPath: path, fromDay: "2011-01-01", toDay: "2016-02-29") { (path) -> () in
+        extractCommits(.Git, repositoryPath: path, fromDay: "2011-01-01", toDay: "2016-03-31") { (path) -> () in
             print("->", path)
         }
     }
@@ -25,7 +25,7 @@ func extractData() {
 func draw() {
     
     let fromDay = "2011-01-01"
-    let toDay = "2016-02-29"
+    let toDay = "2016-03-31"
     
     var repoTuples : [(repo:String, jsonPath:String)] = []
     
