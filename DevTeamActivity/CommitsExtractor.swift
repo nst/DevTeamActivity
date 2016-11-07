@@ -12,14 +12,14 @@ struct RegularExpression {
     static func findAll(string s: String, pattern: String) throws -> [String] {
         
         let regex = try NSRegularExpression(pattern: pattern, options: [])
-        let matches = regex.matchesInString(s, options: [], range: NSMakeRange(0, s.characters.count))
+        let matches = regex.matches(in: s, options: [], range: NSMakeRange(0, s.characters.count))
         
         var results : [String] = []
         
         for m in matches {
             for i in 1..<m.numberOfRanges {
-                let range = m.rangeAtIndex(i)
-                results.append((s as NSString).substringWithRange(range))
+                let range = m.rangeAt(i)
+                results.append((s as NSString).substring(with: range))
             }
         }
         
@@ -27,50 +27,50 @@ struct RegularExpression {
     }
 }
 
-enum Error : ErrorType {
-    case BadFormat
-    case BadValues
+enum CommitExtractorError : Error {
+    case badFormat
+    case badValues
 }
 
 enum VCS {
-    case Git
-    case Mercurial
+    case git
+    case mercurial
     
-    func taskToGetLogsForRepository(repositoryPath:String, fromDay:String, toDay:String) -> NSTask {
+    func processToGetLogsForRepository(_ repositoryPath:String, fromDay:String, toDay:String) -> Process {
         
-        let task = NSTask()
+        let process = Process()
         
         switch(self) {
-        case .Git:
-            task.launchPath = "/usr/bin/git"
-            task.arguments = ["--git-dir=\(repositoryPath)/.git", "log", "--pretty=\"%aI %ae\"", "--shortstat", "--after=\(fromDay)", "--before=\(toDay)"]
-        case .Mercurial:
-            task.launchPath = "/usr/local/bin/hg"
-            task.arguments = ["log", "--template", "{date(date,'%Y-%m-%d')} {author|email} {diffstat}\\n", "--date", "\(fromDay) to \(toDay)", "--repository", repositoryPath]
+        case .git:
+            process.launchPath = "/usr/bin/git"
+            process.arguments = ["--git-dir=\(repositoryPath)/.git", "log", "--pretty=\"%aI %ae\"", "--shortstat", "--after=\(fromDay)", "--before=\(toDay)"]
+        case .mercurial:
+            process.launchPath = "/usr/local/bin/hg"
+            process.arguments = ["log", "--template", "{date(date,'%Y-%m-%d')} {author|email} {diffstat}\\n", "--date", "\(fromDay) to \(toDay)", "--repository", repositoryPath]
         }
         
-        guard let path = task.launchPath else { assertionFailure(); return task }
-        guard NSFileManager.defaultManager().fileExistsAtPath(path) else { assertionFailure(); return task }
+        guard let path = process.launchPath else { assertionFailure(); return process }
+        guard FileManager.default.fileExists(atPath: path) else { assertionFailure(); return process }
         
-        let pipe = NSPipe()
-        task.standardOutput = pipe
+        let pipe = Pipe()
+        process.standardOutput = pipe
         //        task.standardError = task.standardOutput
         
-        print("-- \(task.launchPath!) \(task.arguments!.joinWithSeparator(" "))")
+        print("-- \(process.launchPath!) \(process.arguments!.joined(separator: " "))")
         
-        return task
+        return process
     }
     
-    func dataInLogLines(lines: [String]) throws -> [(day:String, email:String, added:Int, removed:Int)] {
+    func dataInLogLines(_ lines: [String]) throws -> [(day:String, email:String, added:Int, removed:Int)] {
         switch(self) {
-        case .Git:
+        case .git:
             return try self.dataInGitLogLines(lines)
-        case .Mercurial:
+        case .mercurial:
             return try self.dataInHgLogLines(lines)
         }
     }
     
-    func dataInGitLogLines(lines: [String]) throws -> [(day:String, email:String, added:Int, removed:Int)] {
+    func dataInGitLogLines(_ lines: [String]) throws -> [(day:String, email:String, added:Int, removed:Int)] {
         /*
         "2015-12-25T15:50:00+01:00 nicolas@seriot.ch"
         
@@ -93,10 +93,10 @@ enum VCS {
             }
             
             if s.hasPrefix(" ") == false {
-                date = s.substringWithRange(NSMakeRange(1, 10))
-                if let emailWithEndingQuote = s.componentsSeparatedByString(" ").last {
-                    let len = emailWithEndingQuote.lengthOfBytesUsingEncoding(NSUTF8StringEncoding)
-                    email = (emailWithEndingQuote as NSString).substringWithRange(NSMakeRange(0, len-1))
+                date = s.substring(with: NSMakeRange(1, 10))
+                if let emailWithEndingQuote = s.components(separatedBy: " ").last {
+                    let len = emailWithEndingQuote.lengthOfBytes(using: String.Encoding.utf8)
+                    email = (emailWithEndingQuote as NSString).substring(with: NSMakeRange(0, len-1))
                 }
             } else {
                 print(line)
@@ -104,11 +104,11 @@ enum VCS {
                 let insertions = try RegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sinsertion")
                 let deletions = try RegularExpression.findAll(string: line, pattern: "\\s(\\d+?)\\sdeletion")
                 
-                if let insertionsCount = insertions.first where insertions.count == 1 {
+                if let insertionsCount = insertions.first , insertions.count == 1 {
                     added = Int(insertionsCount)
                 }
                 
-                if let deletionsCount = deletions.first where deletions.count == 1 {
+                if let deletionsCount = deletions.first , deletions.count == 1 {
                     removed = Int(deletionsCount)
                 }
                 
@@ -116,12 +116,12 @@ enum VCS {
                 
                 guard let
                     existingDate = date,
-                    existingEmail = email,
-                    existingAdded = added,
-                    existingRemoved = removed
+                    let existingEmail = email,
+                    let existingAdded = added,
+                    let existingRemoved = removed
                     else {
                         print("***", line)
-                        throw Error.BadValues
+                        throw CommitExtractorError.badValues
                 }
                 
                 let t = (day:existingDate, email:existingEmail, added:existingAdded, removed:existingRemoved)
@@ -137,28 +137,28 @@ enum VCS {
         return results
     }
     
-    func dataInHgLogLines(lines: [String]) throws -> [(day:String, email:String, added:Int, removed:Int)] {
+    func dataInHgLogLines(_ lines: [String]) throws -> [(day:String, email:String, added:Int, removed:Int)] {
         
         var results : [(day:String, email:String, added:Int, removed:Int)] = []
         
         for line in lines {
             // 2016-01-25 john.doe@aol.com 1: +0/-12
             
-            if line.lengthOfBytesUsingEncoding(NSUTF8StringEncoding) == 0 {
+            if line.lengthOfBytes(using: String.Encoding.utf8) == 0 {
                 continue
             }
             
             let groups = try RegularExpression.findAll(string: line, pattern: "(\\S*)\\s(\\S*)\\s\\d*:\\s\\+(\\d*).-(\\d*)")
             guard groups.count == 4 else {
                 print(groups)
-                throw Error.BadFormat
+                throw CommitExtractorError.badFormat
             }
             
             guard let
                 existingAdded = Int(groups[2]),
-                existingRemoved = Int(groups[3])
+                let existingRemoved = Int(groups[3])
                 else {
-                    throw Error.BadValues
+                    throw CommitExtractorError.badValues
             }
             
             let t = (day:groups[0], email:groups[1], added:existingAdded, removed:existingRemoved)
@@ -174,7 +174,7 @@ typealias AddedRemoved = [String:Int]
 typealias AddedRemovedForAuthor = [String:AddedRemoved]
 typealias AddedRemovedForAuthorForDate = [String:AddedRemovedForAuthor]
 
-func readLogs(vcs:VCS, repositoryPath:String, fromDay:String, toDay:String, completionHandler:(AddedRemovedForAuthorForDate)->()) {
+func readLogs(_ vcs:VCS, repositoryPath:String, fromDay:String, toDay:String, completionHandler:(AddedRemovedForAuthorForDate)->()) {
     
     var results : AddedRemovedForAuthorForDate = [:]
     
@@ -187,19 +187,17 @@ func readLogs(vcs:VCS, repositoryPath:String, fromDay:String, toDay:String, comp
     hg log --template "{date(date, '%Y-%m-%d')} {author|email} {diffstat}\n" --date "2016-01-01 to 2016-01-31"
     */
     
-    let task = vcs.taskToGetLogsForRepository(repositoryPath, fromDay:fromDay, toDay:toDay)
+    let process = vcs.processToGetLogsForRepository(repositoryPath, fromDay:fromDay, toDay:toDay)
     
-    guard let fileHandle = task.standardOutput?.fileHandleForReading else {
-        print("no file handle")
-        completionHandler([:])
-        return
-    }
+    let pipe = Pipe()
+    process.standardOutput = pipe
     
-    task.launch()
+    process.launch()
+
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
     
-    let data = fileHandle.readDataToEndOfFile()
-    let s = NSString(data: data, encoding: NSUTF8StringEncoding)
-    guard let lines = s?.componentsSeparatedByString("\n") else {
+    let s = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
+    guard let lines = s?.components(separatedBy: "\n") else {
         completionHandler([:])
         return
     }
@@ -240,12 +238,12 @@ func readLogs(vcs:VCS, repositoryPath:String, fromDay:String, toDay:String, comp
     completionHandler(results)
 }
 
-func saveLogs(entries:AddedRemovedForAuthorForDate, path:String) throws -> Bool {
-    let jsonData = try NSJSONSerialization.dataWithJSONObject(entries, options: .PrettyPrinted)
-    return jsonData.writeToFile(path, atomically: true)
+func saveLogs(_ entries:AddedRemovedForAuthorForDate, path:String) throws -> Bool {
+    let jsonData = try JSONSerialization.data(withJSONObject: entries, options: .prettyPrinted)
+    return ((try? jsonData.write(to: URL(fileURLWithPath: path), options: [.atomic])) != nil)
 }
 
-func extractCommits(vcs:VCS, repositoryPath:String, fromDay:String, toDay:String, completionHandler:(path:String) -> ()) {
+func extractCommits(_ vcs:VCS, repositoryPath:String, fromDay:String, toDay:String, completionHandler:(_ path:String) -> ()) {
     
     readLogs(vcs, repositoryPath: repositoryPath, fromDay:fromDay, toDay:toDay) { (entries) -> () in
         
@@ -255,9 +253,9 @@ func extractCommits(vcs:VCS, repositoryPath:String, fromDay:String, toDay:String
         let path = "/Users/nst/Desktop/\(repoName)_\(fromDay)_\(toDay).json"
         
         do {
-            try saveLogs(entries, path:path)
+            _ = try saveLogs(entries, path:path)
             print("-- saved \(entries.count) in", path)
-            completionHandler(path: path)
+            completionHandler(path)
         } catch {
             print(error)
         }

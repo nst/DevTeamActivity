@@ -19,48 +19,48 @@ struct ChartDay {
     
     let weekDaysToSkip = [1,2] // Saturday, Sunday
     
-    var dateFormatter: NSDateFormatter = {
-        let df = NSDateFormatter()
+    var dateFormatter: DateFormatter = {
+        let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd"
-        df.timeZone = NSTimeZone(name:"GMT")
+        df.timeZone = TimeZone(identifier:"GMT")
         return df
     }()
     
-    func daysTuplesFromDay(fromDay:String, toDay:String) -> [(day:String, weekDay:Int, offset:CGFloat)] {
+    func daysTuplesFromDay(_ fromDay:String, toDay:String) -> [(day:String, weekDay:Int, offset:CGFloat)] {
         
-        let calendar = NSCalendar.currentCalendar()
+        let calendar = Calendar.current
         
         var daysInfo : [(day:String, weekDay:Int, offset:CGFloat)] = []
         
-        let matchingComponents = NSDateComponents()
+        var matchingComponents = DateComponents()
         matchingComponents.hour = 0
         
-        guard let fromDate = self.dateFormatter.dateFromString(fromDay) else { assertionFailure(); return [] }
-        guard let toDate = self.dateFormatter.dateFromString(toDay) else { assertionFailure(); return [] }
+        guard let fromDate = self.dateFormatter.date(from: fromDay) else { assertionFailure(); return [] }
+        guard let toDate = self.dateFormatter.date(from: toDay) else { assertionFailure(); return [] }
         
         var xOffset : CGFloat = 0
         
-        calendar.enumerateDatesStartingAfterDate(fromDate, matchingComponents: matchingComponents, options: .MatchStrictly) { (date: NSDate?, exactMatch: Bool, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
+        (calendar as NSCalendar).enumerateDates(startingAfter: fromDate, matching: matchingComponents, options: .matchStrictly) { (date: Date?, exactMatch: Bool, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
             
             guard let existingDate = date else { assertionFailure(); return }
             
-            let day = self.dateFormatter.stringFromDate(existingDate)
+            let day = self.dateFormatter.string(from: existingDate)
             
-            let weekDay = calendar.component(.Weekday, fromDate:existingDate)
+            let weekDay = (calendar as NSCalendar).component(.weekday, from:existingDate)
             
             daysInfo.append((day, weekDay, xOffset))
             
             xOffset += self.weekDaysToSkip.contains(weekDay) ? 2 : self.COL_WIDTH
             
-            if existingDate.compare(toDate) != NSComparisonResult.OrderedAscending {
-                stop.memory = true
+            if existingDate.compare(toDate) != ComparisonResult.orderedAscending {
+                stop.pointee = true
             }
         }
         
         return daysInfo
     }
     
-    func rectForDay(offset:CGFloat, rowIndex:Int) -> NSRect {
+    func rectForDay(_ offset:CGFloat, rowIndex:Int) -> NSRect {
         
         let x = self.LEFT_MARGIN_WIDTH + offset
         let y = self.TOP_MARGIN_HEIGTH + rowIndex * self.ROW_HEIGHT
@@ -68,7 +68,7 @@ struct ChartDay {
         return NSMakeRect(x, y, self.COL_WIDTH, self.ROW_HEIGHT)
     }
     
-    func fillColorForLineCountPerDay(count:Int, baseColor:NSColor) -> NSColor {
+    func fillColorForLineCountPerDay(_ count:Int, baseColor:NSColor) -> NSColor {
         var intensity : CGFloat
         
         switch(count) {
@@ -80,33 +80,33 @@ struct ChartDay {
         default: intensity = 0.0
         }
         
-        return baseColor.colorWithAlphaComponent(intensity)
+        return baseColor.withAlphaComponent(intensity)
     }
     
     static var colorPalette = [
-        NSColor.blueColor(),
-        NSColor.greenColor(),
-        NSColor.redColor(),
-        NSColor.yellowColor(),
-        NSColor.cyanColor(),
-        NSColor.purpleColor(),
-        NSColor.orangeColor(),
-        NSColor.magentaColor()
+        NSColor.blue,
+        NSColor.green,
+        NSColor.red,
+        NSColor.yellow,
+        NSColor.cyan,
+        NSColor.purple,
+        NSColor.orange,
+        NSColor.magenta
     ]
     
     static var colorForAuthors : [String:NSColor] = [:]
     
-    func colorForAuthor(author:String) -> NSColor {
+    func colorForAuthor(_ author:String) -> NSColor {
         
         if ChartDay.colorForAuthors[author] == nil {
-            let color = ChartDay.colorPalette.popLast() ?? NSColor.darkGrayColor()
+            let color = ChartDay.colorPalette.popLast() ?? NSColor.darkGray
             ChartDay.colorForAuthors[author] = color
         }
         
         return ChartDay.colorForAuthors[author]!
     }
     
-    func drawLegend(bc:BitmapCanvas, x:CGFloat) {
+    func drawLegend(_ bc:BitmapCanvas, x:CGFloat) {
         
         // draw title
         bc.text("Number of Lines Changed", P(x + 10, 10))
@@ -124,9 +124,9 @@ struct ChartDay {
             let p = P(x + 10 + i/3 * 80, COL_WIDTH + (i%3+1) * self.ROW_HEIGHT - 10)
             let r = NSMakeRect(p.x, p.y, self.COL_WIDTH, self.ROW_HEIGHT)
             let intensity = i * 0.2
-            let fillColor = NSColor.grayColor().colorWithAlphaComponent(intensity)
+            let fillColor = NSColor.gray.withAlphaComponent(intensity)
             
-            bc.rectangle(r, stroke: NSColor.lightGrayColor(), fill: fillColor)
+            bc.rectangle(r, stroke: NSColor.lightGray, fill: fillColor)
             
             let textPoint = P(p.x + COL_WIDTH + 10, p.y + 6)
             let s = numberOfLines[i]
@@ -134,7 +134,7 @@ struct ChartDay {
         }
     }
     
-    func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
+    func drawTimeline(fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
         let bitmapCanvas = BitmapCanvas(880,560, "white")
         
@@ -159,14 +159,14 @@ struct ChartDay {
         for (repoName, jsonPath) in repoTuples {
             
             guard let
-                data = NSData(contentsOfFile: jsonPath),
-                optJSON = try? NSJSONSerialization.JSONObjectWithData(data, options: .MutableLeaves) as? AddedRemovedForAuthorForDate,
-                json = optJSON else {
+                data = try? Data(contentsOf: URL(fileURLWithPath: jsonPath)),
+                let optJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableLeaves) as? AddedRemovedForAuthorForDate,
+                let json = optJSON else {
                     print("-- can't read data in \(jsonPath)")
                     return
             }
             
-            let authorsInRepo = Array(Set(json.values.flatMap({ $0.keys }))).sort()
+            let authorsInRepo = Array(Set(json.values.flatMap({ $0.keys }))).sorted()
             
             // draw repo name
             bitmapCanvas.text(repoName, P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 7))
@@ -174,7 +174,7 @@ struct ChartDay {
             currentRow += 1
             
             // draw authors
-            for (authorIndex, author) in authorsInRepo.enumerate() {
+            for (authorIndex, author) in authorsInRepo.enumerated() {
                 bitmapCanvas.text(
                     author,
                     P(legendAndAuthorsXPosition, self.TOP_MARGIN_HEIGTH + (currentRow+authorIndex) * ROW_HEIGHT + 5))
@@ -183,13 +183,13 @@ struct ChartDay {
             // draw cells
             
             // for each author in the repo
-            for (i, author) in authorsInRepo.enumerate() {
+            for (i, author) in authorsInRepo.enumerated() {
                 
                 // for each day of the timeframe
                 for (day, _, offset) in dayTuples {
                     
                     // set default color
-                    var fillColor = NSColor.clearColor()
+                    var fillColor = NSColor.clear
                     
                     if let addedRemoved = json[day]?[author] {
                         // that day, this author commited changes in the repo
@@ -204,7 +204,7 @@ struct ChartDay {
                     }
                     
                     let rect = rectForDay (offset, rowIndex: currentRow+i)
-                    bitmapCanvas.rectangle(rect, stroke: NSColor.lightGrayColor(), fill: fillColor)
+                    bitmapCanvas.rectangle(rect, stroke: NSColor.lightGray, fill: fillColor)
                 }
             }
             

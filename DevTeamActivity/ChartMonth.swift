@@ -7,6 +7,26 @@
 //
 
 import Cocoa
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 struct ChartMonth {
     
@@ -17,39 +37,39 @@ struct ChartMonth {
     
     let fiveLinesThresholds = [0, 1500, 3000, 6000, 15000]
     
-    var dateFormatter: NSDateFormatter = {
-        let df = NSDateFormatter()
+    var dateFormatter: DateFormatter = {
+        let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd"
-        df.timeZone = NSTimeZone(name:"GMT")
+        df.timeZone = TimeZone(identifier:"GMT")
         return df
     }()
     
-    var monthYearDateFormatter: NSDateFormatter = {
-        let df = NSDateFormatter()
+    var monthYearDateFormatter: DateFormatter = {
+        let df = DateFormatter()
         df.dateFormat = "yyyy-MM"
-        df.timeZone = NSTimeZone(name:"GMT")
+        df.timeZone = TimeZone(identifier:"GMT")
         return df
     }()
     
-    func monthYearTuplesFromDay(fromDay:String, toDay:String) -> [(monthYear:String, offset:CGFloat)] {
+    func monthYearTuplesFromDay(_ fromDay:String, toDay:String) -> [(monthYear:String, offset:CGFloat)] {
         
-        let calendar = NSCalendar.currentCalendar()
+        let calendar = Calendar.current
         
         var monthYearInfo : [(monthYear:String, offset:CGFloat)] = []
         
-        let matchingComponents = NSDateComponents()
+        var matchingComponents = DateComponents()
         matchingComponents.day = 1
         
-        guard let fromDate = self.dateFormatter.dateFromString(fromDay) else { assertionFailure(); return [] }
-        guard let toDate = self.dateFormatter.dateFromString(toDay) else { assertionFailure(); return [] }
+        guard let fromDate = self.dateFormatter.date(from: fromDay) else { assertionFailure(); return [] }
+        guard let toDate = self.dateFormatter.date(from: toDay) else { assertionFailure(); return [] }
         
         var xOffset : CGFloat = 0
         
-        calendar.enumerateDatesStartingAfterDate(fromDate, matchingComponents: matchingComponents, options: .MatchStrictly) { (date: NSDate?, exactMatch: Bool, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
+        (calendar as NSCalendar).enumerateDates(startingAfter: fromDate, matching: matchingComponents, options: .matchStrictly) { (date: Date?, exactMatch: Bool, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
             
             guard let existingDate = date else { assertionFailure(); return }
             
-            let monthYear = self.monthYearDateFormatter.stringFromDate(existingDate)
+            let monthYear = self.monthYearDateFormatter.string(from: existingDate)
             
             monthYearInfo.append((monthYear, xOffset))
             
@@ -59,15 +79,15 @@ struct ChartMonth {
                 xOffset += 4
             }
             
-            if existingDate.compare(toDate) != NSComparisonResult.OrderedAscending {
-                stop.memory = true
+            if existingDate.compare(toDate) != ComparisonResult.orderedAscending {
+                stop.pointee = true
             }
         }
         
         return monthYearInfo
     }
     
-    func monthYearAuthorChangesDictionaryFromJSON(json:AddedRemovedForAuthorForDate) -> [String:[String:Int]] {
+    func monthYearAuthorChangesDictionaryFromJSON(_ json:AddedRemovedForAuthorForDate) -> [String:[String:Int]] {
         
         // read json and build new structure aggregated by months
         
@@ -76,7 +96,7 @@ struct ChartMonth {
         for (day, addedRemovedForAuthorDictionary) in json {
             //print(day, addedRemovedForAuthorDictionary)
             
-            let monthYear = (day as NSString).substringToIndex(7)
+            let monthYear = (day as NSString).substring(to: 7)
             
             if monthYearDictionary[monthYear] == nil {
                 monthYearDictionary[monthYear] = [:]
@@ -107,7 +127,7 @@ struct ChartMonth {
         return monthYearDictionary
     }
     
-    func rectForDay(offset:CGFloat, rowIndex:Int) -> NSRect {
+    func rectForDay(_ offset:CGFloat, rowIndex:Int) -> NSRect {
         
         let x = self.LEFT_MARGIN_WIDTH + offset
         let y = self.TOP_MARGIN_HEIGTH + rowIndex * self.ROW_HEIGHT
@@ -115,7 +135,7 @@ struct ChartMonth {
         return NSMakeRect(x, y, self.COL_WIDTH, self.ROW_HEIGHT)
     }
     
-    func fillColorForLineCountPerMonth(count:Int, baseColor:NSColor) -> NSColor {
+    func fillColorForLineCountPerMonth(_ count:Int, baseColor:NSColor) -> NSColor {
         var intensity : CGFloat
         
         switch(count) {
@@ -127,20 +147,20 @@ struct ChartMonth {
         default: intensity = 0.0
         }
         
-        return baseColor.colorWithAlphaComponent(intensity)
+        return baseColor.withAlphaComponent(intensity)
     }
     
     static var colorForAuthors : [String:NSColor] = [:]
     
-    func colorForAuthor(author:String) -> NSColor {
+    func colorForAuthor(_ author:String) -> NSColor {
         
         if (author as NSString).hasSuffix("@apple.com") {
-            return NSColor.orangeColor()
+            return NSColor.orange
         }
-        return NSColor.darkGrayColor()
+        return NSColor.darkGray
     }
     
-    func drawLegend(bc:BitmapCanvas, x:CGFloat) {
+    func drawLegend(_ bc:BitmapCanvas, x:CGFloat) {
         
         // draw title
         bc.text("Number of Lines Changed", P(x + 10, 10))
@@ -158,9 +178,9 @@ struct ChartMonth {
             let p = P(x + 10 + i/3 * 80, COL_WIDTH + (i%3+1) * self.ROW_HEIGHT - 10)
             let r = NSMakeRect(p.x, p.y, self.COL_WIDTH, self.ROW_HEIGHT)
             let intensity = i * 0.2
-            let fillColor = NSColor.orangeColor().colorWithAlphaComponent(intensity)
+            let fillColor = NSColor.orange.withAlphaComponent(intensity)
             
-            bc.rectangle(r, stroke: NSColor.lightGrayColor(), fill: fillColor)
+            bc.rectangle(r, stroke: NSColor.lightGray, fill: fillColor)
             
             let textPoint = P(p.x + COL_WIDTH + 10, p.y + 6)
             let s = numberOfLines[i]
@@ -168,9 +188,9 @@ struct ChartMonth {
         }
     }
     
-    func linesChangedByAuthor(monthYearAuthorChangesDictionary:[String:[String:Int]]) -> [String:Int] {
+    func linesChangedByAuthor(_ monthYearAuthorChangesDictionary:[String:[String:Int]]) -> [String:Int] {
         var linesChangedByAuthor : [String:Int] = [:]
-        for (monthYear, linesChangedByAuthorThatMonth) in monthYearAuthorChangesDictionary {
+        for (_, linesChangedByAuthorThatMonth) in monthYearAuthorChangesDictionary {
             for (author, linesChanged) in linesChangedByAuthorThatMonth {
                 if linesChangedByAuthor[author] == nil {
                     linesChangedByAuthor[author] = 0
@@ -181,9 +201,9 @@ struct ChartMonth {
         return linesChangedByAuthor
     }
     
-    func drawTimeline(fromDay fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
+    func drawTimeline(fromDay:String, toDay:String, repoTuples:[(repo:String, jsonPath:String)], outPath:String) throws {
         
-        let bitmapCanvas = BitmapCanvas(1400,5700, "white")
+        let bitmapCanvas = BitmapCanvas(1500,8250, "white")
         
         let monthYearTuples = monthYearTuplesFromDay(fromDay, toDay:toDay)
         
@@ -194,7 +214,7 @@ struct ChartMonth {
         }
         
         // find legend x position
-        guard let (monthYear, offset) = monthYearTuples.last else { assertionFailure("period must be at least 1 day"); return }
+        guard let (_, offset) = monthYearTuples.last else { assertionFailure("period must be at least 1 day"); return }
         let legendAndAuthorsXPosition = LEFT_MARGIN_WIDTH + offset + COL_WIDTH + 18
         
         // draw title
@@ -206,12 +226,12 @@ struct ChartMonth {
         var currentRow = 0
         
         // for each repo
-        for (repoName, jsonPath) in repoTuples {
+        for (_, jsonPath) in repoTuples {
             
             guard let
-                data = NSData(contentsOfFile: jsonPath),
-                optJSON = try? NSJSONSerialization.JSONObjectWithData(data, options: .MutableLeaves) as? AddedRemovedForAuthorForDate,
-                json = optJSON else {
+                data = try? Data(contentsOf: URL(fileURLWithPath: jsonPath)),
+                let optJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableLeaves) as? AddedRemovedForAuthorForDate,
+                let json = optJSON else {
                     print("-- can't read data in \(jsonPath)")
                     return
             }
@@ -220,10 +240,10 @@ struct ChartMonth {
             
             let linesByAuthor = linesChangedByAuthor(monthYearAuthorChangesDictionary)
             
-            let sortedAuthors = Array(linesByAuthor.keys).sort({ linesByAuthor[$0] > linesByAuthor[$1] })
+            let sortedAuthors = Array(linesByAuthor.keys).sorted(by: { linesByAuthor[$0] > linesByAuthor[$1] })
             
             // draw authors
-            for (authorIndex, author) in sortedAuthors.enumerate() {
+            for (authorIndex, author) in sortedAuthors.enumerated() {
                 bitmapCanvas.text(
                     "\(author) (\(linesByAuthor[author]!))",
                     P(legendAndAuthorsXPosition, self.TOP_MARGIN_HEIGTH + (currentRow+authorIndex) * ROW_HEIGHT + 5))
@@ -232,13 +252,13 @@ struct ChartMonth {
             // draw cells
             
             // for each author in the repo
-            for (i, author) in sortedAuthors.enumerate() {
+            for (i, author) in sortedAuthors.enumerated() {
                 
                 // for each month of the timeframe
                 for (monthYear, offset) in monthYearTuples {
                     
                     // set default color
-                    var fillColor = NSColor.clearColor()
+                    var fillColor = NSColor.clear
                     
                     if let linesChanged = monthYearAuthorChangesDictionary[monthYear]?[author] {
                         // that day, this author commited changes in the repo
@@ -248,14 +268,14 @@ struct ChartMonth {
                     }
                     
                     let rect = rectForDay (offset, rowIndex: currentRow+i)
-                    bitmapCanvas.rectangle(rect, stroke: NSColor.lightGrayColor(), fill: fillColor)
+                    bitmapCanvas.rectangle(rect, stroke: NSColor.lightGray, fill: fillColor)
                 }
             }
             
             currentRow += sortedAuthors.count
         }
         
-        let currentDateString = dateFormatter.stringFromDate(NSDate()) // FIXME: doesn't consider timezones
+        let currentDateString = dateFormatter.string(from: Date()) // FIXME: doesn't consider timezones
         
         bitmapCanvas.text("Generated by Nicolas Seriot on \(currentDateString) with https://github.com/nst/DevTeamActivity", P(LEFT_MARGIN_WIDTH, self.TOP_MARGIN_HEIGTH + currentRow * ROW_HEIGHT + 10))
         
